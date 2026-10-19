@@ -37,8 +37,12 @@ GitHub API 初始请求在代理 CONNECT阶段返回403；环境配置草稿已�
 
 首轮真实Actions运行39253318095在android-actions/setup-android步骤失败（公开页面可见步骤结论，完整日志需认证）。依据Ubuntu24 runner官方清单，改用已预装Android SDK，缺失时才由sdkmanager补充。另检查Maven AAR元数据确认API102/service102均要求minCompileSdk37，已升级编译工具链；运行目标仍是Android15/API35，不采用Android17专属运行API。
 
-最近运行39254456996已通过32测试和全部编译/结构检查，签名停在store密码校验：EXISTING_KEYSTORE_PASSWORD_REJECTED。请在仓库 Settings → Secrets and variables → Actions 安全核对 KEYSTORE_BASE64与KEYSTORE_PASSWORD，保留原证书。ALIAS/KEY_PASSWORD尚未经过后续校验。可在Actions选Android CI → Run workflow重试；无需Windows新增任何构建环境。
+此前运行39254456996已通过32测试和全部编译/结构检查，签名停在store密码校验：EXISTING_KEYSTORE_PASSWORD_REJECTED。请在仓库 Settings → Secrets and variables → Actions 安全核对 KEYSTORE_BASE64与KEYSTORE_PASSWORD，保留原证书。ALIAS/KEY_PASSWORD尚未经过后续校验。可在Actions选Android CI → Run workflow重试；无需Windows新增任何构建环境。
 
 ## 0.2.0 热重载构建
 
 versionCode=2；Debug、unsigned Release与正式签名产物名称均使用v0.2.0。CI现在要求40项测试，检查单一入口和autoHotReload=true。用户已修复Repository secrets，但新Actions39266976764实际仍在JKS store password完整性/密码校验阶段失败；40测试和APK编译成功，尚无正式签名产物。签名仍使用既有四项Secret，不生成密钥。
+
+## 默认不签名构建已验证
+
+Actions39290685717整体SUCCESS：40测试、Lint、Debug与R8 Release编译、模块/热重载元数据检查通过；正式签名job按默认配置跳过。下载当前build artifact中的Debug APK即可用于安装调试；unsigned Release只用于后续签名，不可直接安装。不需要继续处理签名Secrets才能完成普通开发构建。

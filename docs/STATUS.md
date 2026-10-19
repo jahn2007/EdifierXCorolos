@@ -2,7 +2,11 @@
 
 ## 当前构建策略
 
-按用户要求，暂时关闭正式签名。Push/PR/Tag和手动运行均默认只构建Debug及unsigned Release，sign job只有手动勾选sign_release才执行。保留现有Secrets和签名实现，未修改密钥。Debug APK可安装，unsigned Release不能直接安装。本次新运行结果待验证。
+按用户要求，暂时关闭正式签名。Push/PR/Tag和手动运行均默认只构建Debug及unsigned Release，sign job只有手动勾选sign_release才执行。保留现有Secrets和签名实现，未修改密钥。Debug APK可安装，unsigned Release不能直接安装。[Actions 39290685717](https://github.com/jahn2007/EdifierXCorolos/actions/runs/39290685717) 已整体SUCCESS：40项测试、Lint、Debug/R8 Release和模块元数据校验通过，正式签名job跳过。
+
+[下载v0.2.0构建产物](https://github.com/jahn2007/EdifierXCorolos/actions/runs/39290685717/artifacts/12205985238)，包含可安装的Debug APK、unsigned Release及SHA256校验报告。Debug单文件SHA256：`0cffd5c0e4698b0c6bed511c5c74f1368614fb80d7042cecee224c635b57935c`。没有使用正式keystore。
+
+下方签名错误属于此前尝试正式签名的历史结果，当前默认构建已不受其阻断。
 
 ## 0.2.0 此前验证结果
 
