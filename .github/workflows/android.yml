@@ -66,6 +66,12 @@ jobs:
           name: EdifierXCorolos-v0.2.0-build-${{ github.run_number }}
           path: artifacts/
           if-no-files-found: error
+      - name: Upload installable Debug APK separately
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: EdifierXCorolos-v0.2.0-debug-${{ github.run_number }}
+          path: artifacts/EdifierXCorolos-v0.2.0-debug.apk
+          if-no-files-found: error
       - name: Upload reports even on failure
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
@@ -76,6 +82,24 @@ jobs:
             core/build/test-results/
             app/build/reports/
           if-no-files-found: warn
+  publish_debug:
+    name: Publish downloadable Debug APK
+    needs: build
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: EdifierXCorolos-v0.2.0-debug-${{ github.run_number }}
+          path: debug-apk
+      - name: Publish clearly labeled Debug prerelease with direct APK link
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tools/publish_debug_release.py debug-apk/EdifierXCorolos-v0.2.0-debug.apk
   sign:
     needs: build
     if: github.event_name == 'workflow_dispatch' && inputs.sign_release == true && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v'))

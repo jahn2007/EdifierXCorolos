@@ -46,3 +46,7 @@ versionCode=2；Debug、unsigned Release与正式签名产物名称均使用v0.2
 ## 默认不签名构建已验证
 
 Actions39290685717整体SUCCESS：40测试、Lint、Debug与R8 Release编译、模块/热重载元数据检查通过；正式签名job按默认配置跳过。下载当前build artifact中的Debug APK即可用于安装调试；unsigned Release只用于后续签名，不可直接安装。不需要继续处理签名Secrets才能完成普通开发构建。
+
+## APK直接下载
+
+Actions artifact是ZIP且通常需要登录GitHub。为手机端提供实际APK附件，成功的main构建会执行publish_debug job，使用GitHub自带GITHUB_TOKEN发布明确标注Debug的prerelease；上传可安装APK和独立SHA256文件，并在job summary显示真实下载URL。只给该job contents:write，PR不运行发布，也不使用正式签名Secrets。每次构建使用独立debug-v0.2.0-build编号，不覆盖既有Release或证书。构建页同时保留独立debug artifact和完整build artifact。
