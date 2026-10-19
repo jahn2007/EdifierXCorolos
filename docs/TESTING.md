@@ -1,0 +1,31 @@
+# 测试与验收
+
+单元测试只在 Actions 执行。ProtocolTest 覆盖公开录制样本解码、两套帧/校验、分包粘包、错误长度与校验、回声拒绝、缓存上限、Evo/FitBuds加密差异、型号名+UUID、TWS未知/盒离线、非法百分比、不支持型号和危险指令白名单。
+
+SessionTest 使用明确命名的测试 Fake transport 验证 FIFO/在途限制、超时关闭并取消后续命令、队列界限、代际隔离、断线清理、重连、写入ACK+回读、连续点击拒绝。Fake只在测试源码中，应用不会加载它。公开来源采集与合成ACK样本分别标注，不能称本项目设备录制。
+
+CI Lint、Debug/Release编译、DEX/manifest/模块元数据和签名是独立检查。Python static_check只检查源码合同，不替代编译或测试。Android实际 GATT 回调、射频传输、Binder UID策略与宿主生命周期仍需设备验收；core单元测试不等于这些实机PASS。
+
+## PHK110 + Evo Pro 实机清单
+
+以下全部 **UNRUN**，未连接任何手机/耳机，不得自动改成PASS：
+
+|项目|预期|结果|
+|---|---|---|
+|模块识别|LSPosed API102可加载入口|UNRUN|
+|作用域|基础Settings包，实验功能独立选择|UNRUN|
+|正常设置与其他设备|不崩溃/不注入其他设备|UNRUN|
+|Evo身份|原始型号+SDP，用户核对，F2和1B响应|UNRUN|
+|原生详情区|页面内Preference，明暗主题正确|UNRUN|
+|ANC/通透/关闭/抗风|真实响应，ACK与回读，失败不假更新|UNRUN|
+|耳机主动按键切换|通知或30秒读取后更新|UNRUN|
+|电量|独立左右耳/盒，离线盒未知|UNRUN|
+|Android系统单电量|可选桥接且标准电量优先|UNRUN|
+|快速设备切换|旧页面命令被拒绝|UNRUN|
+|断线/蓝牙关闭/重连|取消请求、清空电量、恢复只读初始化|UNRUN|
+|页面反复进出|无Activity/线程泄漏，不影响宿主|UNRUN|
+|媒体/通话|A2DP/HFP保持正常|UNRUN|
+|禁用恢复|取消作用域+重启恢复ColorOS原行为|UNRUN|
+|官方连接/开盖弹窗|当前无实现，不应显示自称原厂弹窗|UNIMPLEMENTED|
+
+执行时记录系统构建、宿主版本、Evo固件、APK SHA256/证书、复现步骤与脱敏报告。只有耳机真实状态改变且回读正确才能记录协议实机PASS。

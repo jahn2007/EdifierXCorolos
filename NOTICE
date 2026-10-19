@@ -1,0 +1,15 @@
+EdifierXCorolos — Copyright (c) 2026 contributors. GPL-3.0-or-later.
+
+Protocol facts, model mappings and published capture fixtures adapted with attribution from:
+HyperEars (silverpoetry and contributors), GPL-3.0, commit 7acd3164ed62f63e309484e0fb75504c18d3e733.
+See docs/REFERENCES.md for exact source links and evidence boundaries.
+Legacy protocol cross-checked against mEDIFIER (wh201906), GPL-3.0, and edifier-proto.
+No official Edifier APK, DEX, artwork, firmware or pairing credentials are distributed.
+Device artwork is a generic project-created headphones vector, not an official model rendering.
+Gradle wrapper JAR: Gradle Inc., Apache-2.0. License: licenses/Apache-2.0.txt.
+libxposed API/service: compile-only API and service library resolved from Maven Central;
+licenses remain with their respective owners.
+UI-hook designs were researched from ColorOS-Panel-For-OriG-in (MIT),
+HuaweiPods-ColorOS and FxxkMoondrop (GPL-3.0), MelodyCodecTweaker (Apache-2.0).
+OPatch (AGPL-3.0) was consulted for platform constraints; no OPatch code was copied.
+EDIFIER, 花再, OPPO, OnePlus and ColorOS are their owners' marks. No endorsement implied.

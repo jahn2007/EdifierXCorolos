@@ -1,0 +1,3 @@
+-keep class io.github.jahn2007.edifierx.xposed.ModuleEntry { *; }
+-keep class io.github.libxposed.** { *; }
+-keepattributes Signature,InnerClasses,EnclosingMethod

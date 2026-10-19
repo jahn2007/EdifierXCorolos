@@ -1,0 +1,105 @@
+name: Android CI
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: android-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@9fc6c4e9069bf8d3d10b2204b1fb8f6ef7065407
+      - uses: gradle/actions/setup-gradle@0b6dd653ba04f4f93bf581ec31e66cbd7dcb644d
+      - name: SDK and static contracts
+        run: |
+          sdkmanager 'platforms;android-35' 'build-tools;35.0.0'
+          python3 tools/static_check.py
+      - name: Unit tests, lint, debug and R8 release compilation
+        run: ./gradlew --no-daemon :core:test :app:lintDebug :app:assembleDebug :app:assembleRelease
+      - name: Verify test execution and APK metadata
+        run: |
+          python3 - <<'PYCODE'
+          import pathlib,xml.etree.ElementTree as ET
+          suites=[ET.parse(p).getroot() for p in pathlib.Path('core/build/test-results/test').glob('TEST-*.xml')]
+          count=sum(int(s.attrib['tests']) for s in suites)
+          assert count>=30, f'Expected >=30 executed tests, got {count}'
+          assert sum(int(s.attrib.get('skipped',0))+int(s.attrib.get('failures',0))+int(s.attrib.get('errors',0)) for s in suites)==0
+          print(f'{count} tests executed and passed')
+          PYCODE
+          mkdir -p artifacts
+          python3 tools/verify_apk.py app/build/outputs/apk/debug/app-debug.apk --aapt "$ANDROID_HOME/build-tools/35.0.0/aapt" > artifacts/debug-verification.json
+          python3 tools/verify_apk.py app/build/outputs/apk/release/app-release-unsigned.apk --aapt "$ANDROID_HOME/build-tools/35.0.0/aapt" > artifacts/release-unsigned-verification.json
+          cp app/build/outputs/apk/debug/app-debug.apk artifacts/EdifierXCorolos-v0.1.0-debug.apk
+          cp app/build/outputs/apk/release/app-release-unsigned.apk artifacts/EdifierXCorolos-v0.1.0-release-unsigned.apk
+          (cd artifacts && sha256sum *.apk > SHA256SUMS.txt)
+      - name: Upload APKs
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: EdifierXCorolos-v0.1.0-build-${{ github.run_number }}
+          path: artifacts/
+          if-no-files-found: error
+      - name: Upload reports even on failure
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: EdifierXCorolos-v0.1.0-reports-${{ github.run_number }}
+          path: |
+            core/build/reports/
+            core/build/test-results/
+            app/build/reports/
+          if-no-files-found: warn
+  sign:
+    needs: build
+    if: github.event_name != 'pull_request' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v'))
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@9fc6c4e9069bf8d3d10b2204b1fb8f6ef7065407
+      - run: sdkmanager 'build-tools;35.0.0'
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: EdifierXCorolos-v0.1.0-build-${{ github.run_number }}
+          path: artifacts
+      - name: Restore existing keystore and sign (no debug fallback)
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+          SIGNING_ALIAS: ${{ secrets.ALIAS }}
+        run: |
+          set -euo pipefail
+          : "${KEYSTORE_BASE64:?Missing KEYSTORE_BASE64}" "${KEYSTORE_PASSWORD:?Missing KEYSTORE_PASSWORD}" "${KEY_PASSWORD:?Missing KEY_PASSWORD}" "${SIGNING_ALIAS:?Missing ALIAS}"
+          umask 077
+          printf '%s' "$KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/edifier-release.jks"
+          mkdir -p signed
+          "$ANDROID_HOME/build-tools/35.0.0/zipalign" -p -f 4 artifacts/EdifierXCorolos-v0.1.0-release-unsigned.apk "$RUNNER_TEMP/aligned.apk"
+          "$ANDROID_HOME/build-tools/35.0.0/apksigner" sign --ks "$RUNNER_TEMP/edifier-release.jks" --ks-key-alias "$SIGNING_ALIAS" --ks-pass env:KEYSTORE_PASSWORD --key-pass env:KEY_PASSWORD --out signed/EdifierXCorolos-v0.1.0-release.apk "$RUNNER_TEMP/aligned.apk"
+          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose --print-certs signed/EdifierXCorolos-v0.1.0-release.apk > signed/signature-report.txt
+          python3 tools/verify_apk.py signed/EdifierXCorolos-v0.1.0-release.apk --aapt "$ANDROID_HOME/build-tools/35.0.0/aapt" > signed/apk-verification.json
+          (cd signed && sha256sum *.apk > SHA256SUMS.txt)
+      - name: Remove temporary sensitive files
+        if: always()
+        run: rm -f "$RUNNER_TEMP/edifier-release.jks" "$RUNNER_TEMP/aligned.apk"
+      - name: Upload signed release APK
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: EdifierXCorolos-v0.1.0-signed-${{ github.run_number }}
+          path: signed/
+          if-no-files-found: error
