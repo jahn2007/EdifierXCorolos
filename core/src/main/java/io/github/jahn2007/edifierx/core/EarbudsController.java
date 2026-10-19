@@ -45,16 +45,24 @@ public final class EarbudsController implements AutoCloseable {
             if(data.length>offset&&(offset==0||(data[0]&255)==profile.ancSlot()))noise=profile.readModes().getOrDefault(data[offset]&255,noise);
         }
         if(profile.game()&&(frame.command()==0x08||frame.command()==0x09)&&data.length==1&&(data[0]&255)<=1)game=data[0]!=0;
-        boolean identified=(battery!=null||!noise.equals("UNKNOWN"))||s.identified();
-        emit(new DeviceState(s.generation(),s.address(),s.profileId(),s.phase(),battery==null?s.battery():battery,noise,game,identified,s.error()));
+        Battery nextBattery=battery==null?s.battery():battery;
+        boolean identified=nextBattery.systemLevel()>=0&&(profile.readModes().isEmpty()||!noise.equals("UNKNOWN"));
+        emit(new DeviceState(s.generation(),s.address(),s.profileId(),s.phase(),nextBattery,noise,game,identified,s.error()));
     }
     public void refreshState(){loop.execute(()->{if(commands!=null&&state.phase()==Phase.READY)refreshOnLoop();});}
     private void refreshOnLoop() {
         long token=epoch;phase(Phase.READING,"");
         CommandQueue active=commands;DeviceProfile selected=profile;
-        CompletableFuture<?> f=active.submit(selected.batteryCommand(),selected.query(selected.batteryCommand()));
-        if(!selected.readModes().isEmpty())f=f.thenCompose(x->active.submit(0xCC,selected.query(0xCC)));
-        if(selected.game())f=f.thenCompose(x->active.submit(0x08,selected.query(0x08)));
+        CompletableFuture<?> f=active.submit(selected.batteryCommand(),selected.query(selected.batteryCommand())).thenApply(frame->{
+            if(Battery.parse(selected,frame)==null)throw new CompletionException(new IllegalArgumentException("invalid battery response"));return frame;
+        });
+        if(!selected.readModes().isEmpty())f=f.thenCompose(x->active.submit(0xCC,selected.query(0xCC))).thenApply(frame->{
+            byte[] b=selected.decode(frame.payload());int offset=selected.ancSlot()<0?0:1;
+            if(b.length<=offset||(offset==1&&(b[0]&255)!=selected.ancSlot())||!selected.readModes().containsKey(b[offset]&255))throw new CompletionException(new IllegalArgumentException("ANC slot mismatch"));return frame;
+        });
+        if(selected.game())f=f.thenCompose(x->active.submit(0x08,selected.query(0x08))).thenApply(frame->{
+            byte[] b=selected.decode(frame.payload());if(b.length!=1||(b[0]&255)>1)throw new CompletionException(new IllegalArgumentException("game response mismatch"));return frame;
+        });
         f.whenComplete((ok,e)->loop.execute(()->{if(token!=epoch)return;if(e!=null)failed("READ_FAILED");else if(state.identified())phase(Phase.READY,"");else failed("PROFILE_RESPONSE_MISMATCH");}));
     }
     public CompletableFuture<Void> setNoiseMode(String expectedAddress,long expectedGeneration,String mode){return write(expectedAddress,expectedGeneration,mode,null);}

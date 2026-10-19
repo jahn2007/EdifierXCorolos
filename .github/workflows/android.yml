@@ -27,7 +27,14 @@ jobs:
           test -x "$ANDROID_HOME/build-tools/37.0.0/apksigner" || sdkmanager 'build-tools;37.0.0'
           python3 tools/static_check.py
       - name: Unit tests, lint, debug and R8 release compilation
-        run: ./gradlew --no-daemon :core:test :app:lintDebug :app:assembleDebug :app:assembleRelease
+        run: |
+          set +e
+          set -o pipefail
+          ./gradlew --no-daemon :core:test :app:lintDebug :app:assembleDebug :app:assembleRelease 2>&1 | tee "$RUNNER_TEMP/edifier-build.log"
+          result=${PIPESTATUS[0]}
+          set -e
+          python3 tools/ci_diagnostics.py "$RUNNER_TEMP/edifier-build.log" "$result"
+          exit "$result"
       - name: Verify test execution and APK metadata
         run: |
           python3 - <<'PYCODE'

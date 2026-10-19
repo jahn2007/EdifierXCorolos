@@ -11,7 +11,7 @@ public final class ControlProvider extends ContentProvider {
     public static final Uri URI=Uri.parse("content://io.github.jahn2007.edifierx.control/state");
     @Override public boolean onCreate(){return true;}
     @Override public Bundle call(String method,String arg,Bundle extras){
-        Context context=requireContext();CallerPolicy.enforce(context,Binder.getCallingUid());
+        Context context=providerContext();CallerPolicy.enforce(context,Binder.getCallingUid());
         DeviceRuntime runtime=DeviceRuntime.get(context);String address=arg==null?"":arg;
         if("snapshot".equals(method))return runtime.snapshot(address);
         // Only the module UI can initiate a connection or enroll an address.
@@ -28,7 +28,7 @@ public final class ControlProvider extends ContentProvider {
         else throw new IllegalArgumentException("unknown method");
         return runtime.snapshot(address);
     }
-    private Context requireContext(){Context c=getContext();if(c==null)throw new IllegalStateException("provider not attached");return c;}
+    private Context providerContext(){Context c=getContext();if(c==null)throw new IllegalStateException("provider not attached");return c;}
     @Override public Cursor query(Uri u,String[] p,String s,String[] a,String sort){throw new UnsupportedOperationException();}
     @Override public String getType(Uri u){return "application/vnd.edifierx.state";}
     @Override public Uri insert(Uri u,ContentValues v){throw new UnsupportedOperationException();}
