@@ -1,5 +1,13 @@
 # 当前交付状态
 
+## APK直接下载已验证
+
+[Debug APK直链](https://github.com/jahn2007/EdifierXCorolos/releases/download/debug-v0.2.0-build10/EdifierXCorolos-v0.2.0-debug.apk)（2696804 bytes），[Release页面](https://github.com/jahn2007/EdifierXCorolos/releases/tag/debug-v0.2.0-build10)。
+
+[Actions39291673590](https://github.com/jahn2007/EdifierXCorolos/actions/runs/39291673590) 已SUCCESS：40项测试、Lint、编译、元数据检查及Publish downloadable Debug APK均通过；正式签名跳过。
+
+已从无GitHub登录的HTTP请求实际下载公开APK，并与Release的校验文件和asset digest三方匹配：`f1699d952d780fa0f71b4b896ec131ab10ba9dcf98145c28dc51029314cfa79c`。这是调试证书APK，不是正式签名稳定版，实机功能仍待验证。之后main构建自动增加独立Debug artifact并发布Debug prerelease。
+
 ## 当前构建策略
 
 按用户要求，暂时关闭正式签名。Push/PR/Tag和手动运行均默认只构建Debug及unsigned Release，sign job只有手动勾选sign_release才执行。保留现有Secrets和签名实现，未修改密钥。Debug APK可安装，unsigned Release不能直接安装。[Actions 39290685717](https://github.com/jahn2007/EdifierXCorolos/actions/runs/39290685717) 已整体SUCCESS：40项测试、Lint、Debug/R8 Release和模块元数据校验通过，正式签名job跳过。

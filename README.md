@@ -1,6 +1,6 @@
 # EdifierXCorolos
 
-**[下载可安装的 Debug APK（Release 页面 → Assets → debug.apk）](https://github.com/jahn2007/EdifierXCorolos/releases)**
+**[直接下载 v0.2.0 Debug APK](https://github.com/jahn2007/EdifierXCorolos/releases/download/debug-v0.2.0-build10/EdifierXCorolos-v0.2.0-debug.apk)** · [所有开发构建](https://github.com/jahn2007/EdifierXCorolos/releases)
 
 为 OnePlus Ace 2 / PHK110、ColorOS 15 / Android 15 开发的 Modern libxposed API 102 模块。**优先适配花再 Evo Pro**。目标是系统蓝牙详情页内的真实耳机控制，不以普通 App 页面代替原生控制。
 
@@ -17,7 +17,7 @@
 
 Evo Pro 游戏模式、EQ、手势、入耳检测、官方连接/开盖弹窗、MyDevices 专属卡片与 OPlus TWS 原生三电量接口仍需要对应型号/ColorOS 15 证据；**不会显示假开关**。兼容候选 Profile 见 [协议报告](docs/PROTOCOL_ANALYSIS.md)，不承诺官方 App 全型号已适配。
 
-最新 [CI运行](https://github.com/jahn2007/EdifierXCorolos/actions/runs/39290685717) 已通过40项测试、Lint和APK编译/结构检查；当前默认关闭正式签名，提供可安装调试的Debug APK和未签名Release APK；以后可手动勾选sign_release启用既有证书签名。热重载尚待实机验收。
+最新 [CI运行](https://github.com/jahn2007/EdifierXCorolos/actions/runs/39291673590) 已通过40项测试、Lint和APK编译/结构检查；当前默认关闭正式签名，提供可安装调试的Debug APK和未签名Release APK；以后可手动勾选sign_release启用既有证书签名。热重载尚待实机验收。
 
 支持 API 102 自动/手动热重载，更新APK后可更换已注入宿主的Hook代码；会清理旧代控件、监听器与线程。**从0.1.0首次升级后仍须重启宿主一次**，后续版本才可连续换代。操作、边界和失败恢复见 [HOT_RELOAD](docs/HOT_RELOAD.md)。
 
