@@ -1,6 +1,10 @@
 # 当前交付状态
 
-## 0.2.0 最新验证结果
+## 当前构建策略
+
+按用户要求，暂时关闭正式签名。Push/PR/Tag和手动运行均默认只构建Debug及unsigned Release，sign job只有手动勾选sign_release才执行。保留现有Secrets和签名实现，未修改密钥。Debug APK可安装，unsigned Release不能直接安装。本次新运行结果待验证。
+
+## 0.2.0 此前验证结果
 
 API102 自动/手动热重载已实现；源码提交7859052，签名安全诊断补充提交00c902a。
 
