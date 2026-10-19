@@ -16,15 +16,15 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
-      - uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3
+      - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961
         with:
           distribution: temurin
           java-version: '17'
-      - uses: android-actions/setup-android@9fc6c4e9069bf8d3d10b2204b1fb8f6ef7065407
       - uses: gradle/actions/setup-gradle@0b6dd653ba04f4f93bf581ec31e66cbd7dcb644d
       - name: SDK and static contracts
         run: |
-          sdkmanager 'platforms;android-35' 'build-tools;35.0.0'
+          test -f "$ANDROID_HOME/platforms/android-37.0/android.jar" || sdkmanager 'platforms;android-37.0'
+          test -x "$ANDROID_HOME/build-tools/37.0.0/apksigner" || sdkmanager 'build-tools;37.0.0'
           python3 tools/static_check.py
       - name: Unit tests, lint, debug and R8 release compilation
         run: ./gradlew --no-daemon :core:test :app:lintDebug :app:assembleDebug :app:assembleRelease
@@ -39,8 +39,8 @@ jobs:
           print(f'{count} tests executed and passed')
           PYCODE
           mkdir -p artifacts
-          python3 tools/verify_apk.py app/build/outputs/apk/debug/app-debug.apk --aapt "$ANDROID_HOME/build-tools/35.0.0/aapt" > artifacts/debug-verification.json
-          python3 tools/verify_apk.py app/build/outputs/apk/release/app-release-unsigned.apk --aapt "$ANDROID_HOME/build-tools/35.0.0/aapt" > artifacts/release-unsigned-verification.json
+          python3 tools/verify_apk.py app/build/outputs/apk/debug/app-debug.apk --aapt "$ANDROID_HOME/build-tools/37.0.0/aapt" > artifacts/debug-verification.json
+          python3 tools/verify_apk.py app/build/outputs/apk/release/app-release-unsigned.apk --aapt "$ANDROID_HOME/build-tools/37.0.0/aapt" > artifacts/release-unsigned-verification.json
           cp app/build/outputs/apk/debug/app-debug.apk artifacts/EdifierXCorolos-v0.1.0-debug.apk
           cp app/build/outputs/apk/release/app-release-unsigned.apk artifacts/EdifierXCorolos-v0.1.0-release-unsigned.apk
           (cd artifacts && sha256sum *.apk > SHA256SUMS.txt)
@@ -67,12 +67,11 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
-      - uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3
+      - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961
         with:
           distribution: temurin
           java-version: '17'
-      - uses: android-actions/setup-android@9fc6c4e9069bf8d3d10b2204b1fb8f6ef7065407
-      - run: sdkmanager 'build-tools;35.0.0'
+      - run: test -x "$ANDROID_HOME/build-tools/37.0.0/apksigner" || sdkmanager 'build-tools;37.0.0'
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with:
           name: EdifierXCorolos-v0.1.0-build-${{ github.run_number }}
@@ -89,10 +88,10 @@ jobs:
           umask 077
           printf '%s' "$KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/edifier-release.jks"
           mkdir -p signed
-          "$ANDROID_HOME/build-tools/35.0.0/zipalign" -p -f 4 artifacts/EdifierXCorolos-v0.1.0-release-unsigned.apk "$RUNNER_TEMP/aligned.apk"
-          "$ANDROID_HOME/build-tools/35.0.0/apksigner" sign --ks "$RUNNER_TEMP/edifier-release.jks" --ks-key-alias "$SIGNING_ALIAS" --ks-pass env:KEYSTORE_PASSWORD --key-pass env:KEY_PASSWORD --out signed/EdifierXCorolos-v0.1.0-release.apk "$RUNNER_TEMP/aligned.apk"
-          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose --print-certs signed/EdifierXCorolos-v0.1.0-release.apk > signed/signature-report.txt
-          python3 tools/verify_apk.py signed/EdifierXCorolos-v0.1.0-release.apk --aapt "$ANDROID_HOME/build-tools/35.0.0/aapt" > signed/apk-verification.json
+          "$ANDROID_HOME/build-tools/37.0.0/zipalign" -p -f 4 artifacts/EdifierXCorolos-v0.1.0-release-unsigned.apk "$RUNNER_TEMP/aligned.apk"
+          "$ANDROID_HOME/build-tools/37.0.0/apksigner" sign --ks "$RUNNER_TEMP/edifier-release.jks" --ks-key-alias "$SIGNING_ALIAS" --ks-pass env:KEYSTORE_PASSWORD --key-pass env:KEY_PASSWORD --out signed/EdifierXCorolos-v0.1.0-release.apk "$RUNNER_TEMP/aligned.apk"
+          "$ANDROID_HOME/build-tools/37.0.0/apksigner" verify --verbose --print-certs signed/EdifierXCorolos-v0.1.0-release.apk > signed/signature-report.txt
+          python3 tools/verify_apk.py signed/EdifierXCorolos-v0.1.0-release.apk --aapt "$ANDROID_HOME/build-tools/37.0.0/aapt" > signed/apk-verification.json
           (cd signed && sha256sum *.apk > SHA256SUMS.txt)
       - name: Remove temporary sensitive files
         if: always()

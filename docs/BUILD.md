@@ -2,7 +2,7 @@
 
 唯一 APK 构建/测试渠道为 `.github/workflows/android.yml`。Windows 用户无需安装任何新增构建环境；Git 提交推送和浏览器查看 Actions 即可。Codex 环境只做源码分析、Git 与 Python 静态检查，不运行 Gradle/APK构建/单元测试。
 
-固定：AGP 8.9.1、Gradle 8.11.1（官方 distribution SHA-256）、Temurin JDK 17、compile/target SDK35、minSDK35、Build Tools35.0.0、Java17、libxposed API102.0.0 compileOnly/service102.0.0、desugar2.1.5、JUnit4.13.2。Action 引用锁定已查询的实际 commit SHA；actions/setup-gradle 执行 wrapper 校验及缓存，仓库 wrapper JAR 已按官方 SHA-256核验。没有动态 Maven 版本。
+固定：AGP 9.4.1、Gradle 9.6.0（官方 distribution SHA-256）、Temurin JDK 17、compile SDK37.0、target/minSDK35、Build Tools37.0.0、Java17、libxposed API102.0.0 compileOnly/service102.0.0、desugar2.1.5、JUnit4.13.2。Action 引用锁定已查询的实际 commit SHA；actions/setup-gradle 执行 wrapper 校验及缓存，仓库 wrapper JAR 已按官方 SHA-256核验。没有动态 Maven 版本。
 
 触发：main push、PR、v* tag、手动 workflow_dispatch。build job 运行 `:core:test :app:lintDebug :app:assembleDebug :app:assembleRelease`，后者验证 R8 release 编译。测试结果断言至少30项且无失败、错误、跳过。上传 Debug APK、明确标注 unsigned 的 Release APK、SHA256、APK结构验证、JUnit与Lint报告。失败时仍尝试上传已有报告。
 
@@ -28,3 +28,5 @@
 ## 当前操作证据
 
 GitHub API 初始请求在代理 CONNECT阶段返回403；环境配置草稿已添加 api.github.com，但草稿不等于运行策略已应用。Git read成功不证明API/Actions权限。实际提交、推送、Actions run与产物结果另见 STATUS，不能用工作流文件存在冒充运行成功。
+
+首轮真实Actions运行39253318095在android-actions/setup-android步骤失败（公开页面可见步骤结论，完整日志需认证）。依据Ubuntu24 runner官方清单，改用已预装Android SDK，缺失时才由sdkmanager补充。另检查Maven AAR元数据确认API102/service102均要求minCompileSdk37，已升级编译工具链；运行目标仍是Android15/API35，不采用Android17专属运行API。

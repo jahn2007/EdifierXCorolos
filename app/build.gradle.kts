@@ -1,8 +1,9 @@
 plugins { id("com.android.application") }
 android {
     namespace = "io.github.jahn2007.edifierx"
-    compileSdk = 35
-    buildToolsVersion = "35.0.0"
+    compileSdk = 37
+    compileSdkMinor = 0
+    buildToolsVersion = "37.0.0"
     defaultConfig {
         applicationId = "io.github.jahn2007.edifierx"
         minSdk = 35
