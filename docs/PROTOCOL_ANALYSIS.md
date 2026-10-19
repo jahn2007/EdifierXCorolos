@@ -15,7 +15,7 @@ RFCOMM SDP UUID：`EDF00000-EDFE-DFED-FEDF-EDFEDFEDFEDF`，使用 public secure 
 |功能|型号|命令/参数|回应解码与校验|握手/订阅|证据和等级|未确认问题|
 |---|---|---|---|---|---|---|
 |组件电量读取|花再 Evo Pro|F2，无参数|XOR 后至少 5 字节；byte0 metadata，byte1/2 左右耳，byte3 盒，byte4 盒状态；1 charging/2 not charging/3 offline；耳 0 表未知；范围 0..100|无额外配对绕过；作为只读就绪探测，保持 RFCOMM 读循环|HyperEars EdifierWireCodec 与测试，`CONFIRMED`（上游采集）|本设备固件和通知频率待实测；盒 offline 时不显示百分比|
-|降噪读取|花再 Evo Pro|CC，无参数|XOR 后 `[1B,value]`；1 深度/2 舒适/3 轻度/4 抗风/5 通透/6 关闭|READY 要求此槽位匹配；无额外订阅命令|EdifierAncDialects.EVO_PRO，`CONFIRMED`（上游）|各固件主动通知/延迟需实测|
+|降噪读取|花再 Evo Pro|CC，无参数|XOR 后 `[1B,value]`；1/2/3 ANC（细分名称待确认）/4 抗风/5 通透/6 关闭|READY 要求此槽位匹配；无额外订阅命令|EdifierAncDialects.EVO_PRO，`CONFIRMED`（上游）|各固件主动通知/延迟需实测|
 |降噪写入|花再 Evo Pro|C1；明文 `[1B,01/04/05/06]` 后 XOR|等待 C1 ACK，再冷却 2 秒并 CC 回读；不能只收到 socket write 就报成功|必须电量及 ANC 握手通过|EdifierEvoProAdapter 与 writeValues，`CONFIRMED`（上游）|2/3 只有读取映射，未进入正式写入选项；本机 ACK/回读时序待实测|
 |游戏模式|花再 Evo Pro|08/09 不能因其他型号存在而直接使用|无本型号启用路径|不探测|`REFERENCE_ONLY`|上游 Evo Profile 没开启 gameModeQuery；需 Evo 定向采集|
 |版本/设备名/功能表|花再 Evo Pro|C6/C9/D8 存在家族参考|当前不发送，避免未确认响应格式参与身份判定|不适用|`REFERENCE_ONLY`|型号/固件响应字段未确认|
@@ -30,7 +30,7 @@ BB EC F2 00 06 A6 C1 C7 A5 A6 B4 CC  回应解码 03 64 62 00 03 11：左100，�
 BB EC CC 00 02 BE A3 D6              降噪回应解码 1B 06：关闭
 ```
 
-Noise value 2/3 的中文名称属于上游“同为 ANC”细分的界面解释，并未证明官方 App 的准确产品命名；正式写入只使用上游明确列出的 1/4/5/6。测试中的 ACK 变体为按公开帧规则生成的合成向量，与公开实录样本分开标注。
+Noise value 1/2/3 按上游仅显示“主动降噪”，不猜测各等级官方名称；正式写入只使用上游明确列出的 1/4/5/6。测试中的 ACK 变体为按公开帧规则生成的合成向量，与公开实录样本分开标注。
 
 ## 其他明确型号与差异
 
