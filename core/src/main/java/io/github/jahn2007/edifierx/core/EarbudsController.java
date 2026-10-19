@@ -88,7 +88,13 @@ public final class EarbudsController implements AutoCloseable {
                     commands.submit(query,profile.query(query)).whenComplete((read,e)->loop.execute(()->{
                         if(token!=epoch){result.completeExceptionally(new CancellationException());return;}
                         if(e!=null){failed("WRITE_READBACK_FAILED");result.completeExceptionally(e);return;}
-                        boolean match=mode!=null?mode.equals(state.noise()):game.equals(state.game());
+                        byte[] returned=profile.decode(read.payload());
+                        int offset=profile.ancSlot()<0?0:1;
+                        boolean valid=mode!=null
+                            ?returned.length>offset&&(offset==0||(returned[0]&255)==profile.ancSlot())&&profile.readModes().containsKey(returned[offset]&255)
+                            :returned.length==1&&(returned[0]&255)<=1;
+                        if(!valid){failed("WRITE_READBACK_INVALID");result.completeExceptionally(new IllegalStateException("invalid readback payload"));return;}
+                        boolean match=mode!=null?mode.equals(profile.readModes().get(returned[offset]&255)):game.equals(returned[0]!=0);
                         phase(Phase.READY,match?"":"DEVICE_REJECTED_VALUE");
                         if(match)result.complete(null);else result.completeExceptionally(new IllegalStateException("readback mismatch"));
                     }));

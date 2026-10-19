@@ -52,6 +52,17 @@ public class SessionTest {
             assertThrows(ExecutionException.class,()->c.setNoiseMode("A",c.state().generation(),"ANC").get(1,TimeUnit.SECONDS));
         }finally{c.close();}
     }
+    @Test public void malformedReadbackCannotReuseAckStateAsSuccess()throws Exception {
+        var c=new EarbudsController();var t=new Fake();try{
+            c.connect("A",DeviceProfile.find("evo-pro").orElseThrow(),t);await(()->!t.sent.isEmpty());
+            t.receiver.accept(HexFormat.of().parseHex("BBECF20006A6C1C7A5A6B4CC"));await(()->t.sent.size()==2);
+            t.receiver.accept(HexFormat.of().parseHex("BBECCC0002BEA3D6"));await(()->c.state().phase()==DeviceState.Phase.READY);
+            var result=c.setNoiseMode("A",c.state().generation(),"ANC");await(()->t.sent.size()==3);
+            byte[] ack=WireCodec.request(WireCodec.Dialect.BES,0xC1,new byte[]{0x1B,1},true);ack[0]=(byte)0xBB;ack[ack.length-1]+=0x11;t.receiver.accept(ack);
+            await(()->t.sent.size()==4);t.receiver.accept(HexFormat.of().parseHex("BBECCC000073"));
+            assertThrows(ExecutionException.class,()->result.get(1,TimeUnit.SECONDS));assertEquals(DeviceState.Phase.ERROR,c.state().phase());assertEquals("UNKNOWN",c.state().noise());
+        }finally{c.close();}
+    }
     @Test public void writeRequiresAckAndReadbackNotOptimisticState()throws Exception {
         var c=new EarbudsController();var t=new Fake();try{
             c.connect("A",DeviceProfile.find("evo-pro").orElseThrow(),t);await(()->!t.sent.isEmpty());t.receiver.accept(HexFormat.of().parseHex("BBECF20006A6C1C7A5A6B4CC"));await(()->t.sent.size()==2);t.receiver.accept(HexFormat.of().parseHex("BBECCC0002BEA3D6"));await(()->c.state().phase()==DeviceState.Phase.READY);
