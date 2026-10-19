@@ -35,4 +35,4 @@ GitHub API 初始请求在代理 CONNECT阶段返回403；环境配置草稿已�
 
 ## 0.2.0 热重载构建
 
-versionCode=2；Debug、unsigned Release与正式签名产物名称均使用v0.2.0。CI现在要求40项测试，检查单一入口和autoHotReload=true。用户已修复签名配置，实际是否成功需新Actions运行验证，不沿用旧失败作为当前结论。签名仍使用既有四项Secret，不生成密钥。
+versionCode=2；Debug、unsigned Release与正式签名产物名称均使用v0.2.0。CI现在要求40项测试，检查单一入口和autoHotReload=true。用户已修复Repository secrets，但新Actions39266976764实际仍在JKS store password完整性/密码校验阶段失败；40测试和APK编译成功，尚无正式签名产物。签名仍使用既有四项Secret，不生成密钥。

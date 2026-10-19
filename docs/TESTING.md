@@ -34,4 +34,4 @@ CI Lint、Debug/Release编译、DEX/manifest/模块元数据和签名是独立�
 
 ## 0.2.0 热重载验收
 
-新增8项HookGeneration测试：稳定ID/Executable替换、防重复注册、移除弃用和匿名句柄、签名变化、替换失败安全回退、清理失败阻止重复安装、部分失败继续清理并可重试、回滚原子替换后的新句柄。40测试的结果待本次Actions验证；框架回调、旧ClassLoader回收、可见页面恢复和Bluetooth poller换代不能由JVM测试冒充实机PASS。详见[HOT_RELOAD](HOT_RELOAD.md)。
+新增8项HookGeneration测试：稳定ID/Executable替换、防重复注册、移除弃用和匿名句柄、签名变化、替换失败安全回退、清理失败阻止重复安装、部分失败继续清理并可重试、回滚原子替换后的新句柄。40测试已在Actions39266393750和39266976764通过；框架回调、旧ClassLoader回收、可见页面恢复和Bluetooth poller换代不能由JVM测试冒充实机PASS。详见[HOT_RELOAD](HOT_RELOAD.md)。

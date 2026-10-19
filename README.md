@@ -15,6 +15,8 @@
 
 Evo Pro 游戏模式、EQ、手势、入耳检测、官方连接/开盖弹窗、MyDevices 专属卡片与 OPlus TWS 原生三电量接口仍需要对应型号/ColorOS 15 证据；**不会显示假开关**。兼容候选 Profile 见 [协议报告](docs/PROTOCOL_ANALYSIS.md)，不承诺官方 App 全型号已适配。
 
+最新 [CI运行](https://github.com/jahn2007/EdifierXCorolos/actions/runs/39266976764) 已通过40项测试、Lint和APK编译/结构检查；正式签名仍受现有JKS的store password校验失败阻断，当前只提供Debug/unsigned产物。热重载尚待实机验收。
+
 支持 API 102 自动/手动热重载，更新APK后可更换已注入宿主的Hook代码；会清理旧代控件、监听器与线程。**从0.1.0首次升级后仍须重启宿主一次**，后续版本才可连续换代。操作、边界和失败恢复见 [HOT_RELOAD](docs/HOT_RELOAD.md)。
 
 ## 安装和启用

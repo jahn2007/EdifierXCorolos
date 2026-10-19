@@ -1,5 +1,21 @@
 # 当前交付状态
 
+## 0.2.0 最新验证结果
+
+API102 自动/手动热重载已实现；源码提交7859052，签名安全诊断补充提交00c902a。
+
+[Actions 39266976764](https://github.com/jahn2007/EdifierXCorolos/actions/runs/39266976764)：
+
+- build SUCCESS：40项测试，0失败/跳过；Lint、Debug/R8 Release与APK入口/autoHotReload元数据检查通过。
+- [APK产物](https://github.com/jahn2007/EdifierXCorolos/actions/runs/39266976764/artifacts/12193113285)：v0.2.0 Debug APK、unsigned Release和校验报告。
+- Debug APK单文件SHA256：`6803d355cfa8fffda0cdc54faa29e9a4994350b9e518a333a80ba1161915999a`。
+- sign FAILURE：`EXISTING_KEYSTORE_PASSWORD_REJECTED`。识别到JKS容器，底层固定异常类别IOException，未识别到算法缺失/参数不兼容。KEYSTORE_PASSWORD未通过当前JKS的密码/完整性校验；ALIAS与KEY_PASSWORD尚未进入校验。
+- 用户已确认修复的是Repository secrets，和工作流取值位置一致。需安全核对KEYSTORE_BASE64是否是原JKS的完整编码、KEYSTORE_PASSWORD是否为该JKS的store password。不能通过绕过完整性检查、更换证书或debug回退来解决。
+- 自动/手动热重载：源码已集成，替换/回滚JVM测试已通过，真实框架换代/线程退出/ClassLoader释放/ColorOS15页面恢复仍UNRUN。
+- 初次0.1.0→0.2.0安装后仍须重启宿主一次；旧0.1.0入口不能接受热重载。后续更新再验证连续换代，详见[HOT_RELOAD](HOT_RELOAD.md)。
+
+## 0.1.0 历史记录与协议范围
+
 版本0.1.0，优先花再Evo Pro。此文件的“源码已集成”只表示代码调用链已连接，**不表示已编译或宿主实机集成成功**。
 
 |能力|已编译|源码已集成|已协议验证|已实机验证|
