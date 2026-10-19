@@ -45,3 +45,7 @@ Provider 没有任意帧、任意 Intent、文件路径或广播接口。仅 mod
 Android 单电量采用真实 aggregate 或在线左右耳较低值，不以盒电量代替耳机电量；系统详情区可显示真实组件电量。可选 Bluetooth Hook 仅在安全开关和 battery 开关启用、反射方法签名正确时尝试 AdapterService.setBatteryLevel。已有标准电量优先；如果标准通道在本模块写入后出现不同值，停止覆盖。只清除仍等于本模块上次写入值的缓存。无法区分恰好相同的第三方更新，这仍需实机验证。
 
 OPlus 三组件通道、官方连接弹窗和 MyDevices 专属卡片没有 ColorOS 15 ABI 证据，当前不写入、不伪造身份，也不声明开盖事件。
+
+## 0.2.0 热重载
+
+入口实现API102 onHotReloading/onHotReloaded，稳定Hook ID和精确Executable匹配，旧代先停止异步资源，新代replaceHook与回滚。主线程UI拆卸和工作线程终止都有明确完成条件；不能完成清理时拒绝换代。框架服务返回opaque target并异步报告真实状态，详见[HOT_RELOAD](HOT_RELOAD.md)。APK更新可能结束模块App服务，需要重新连接耳机，这与宿主Hook换代分开。

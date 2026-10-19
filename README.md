@@ -2,7 +2,7 @@
 
 为 OnePlus Ace 2 / PHK110、ColorOS 15 / Android 15 开发的 Modern libxposed API 102 模块。**优先适配花再 Evo Pro**。目标是系统蓝牙详情页内的真实耳机控制，不以普通 App 页面代替原生控制。
 
-当前为 **0.1.0 开发版本**。源码中的系统集成和协议实现不等于 PHK110 实测成功；构建结果、协议证据、宿主兼容与实机验收分别记录在 [STATUS](docs/STATUS.md)。尚无本项目实机验证型号，勿称最终稳定版。
+当前为 **0.2.0 开发版本**。源码中的系统集成和协议实现不等于 PHK110 实测成功；构建结果、协议证据、宿主兼容与实机验收分别记录在 [STATUS](docs/STATUS.md)。尚无本项目实机验证型号，勿称最终稳定版。
 
 ## 已实现代码
 
@@ -15,9 +15,11 @@
 
 Evo Pro 游戏模式、EQ、手势、入耳检测、官方连接/开盖弹窗、MyDevices 专属卡片与 OPlus TWS 原生三电量接口仍需要对应型号/ColorOS 15 证据；**不会显示假开关**。兼容候选 Profile 见 [协议报告](docs/PROTOCOL_ANALYSIS.md)，不承诺官方 App 全型号已适配。
 
+支持 API 102 自动/手动热重载，更新APK后可更换已注入宿主的Hook代码；会清理旧代控件、监听器与线程。**从0.1.0首次升级后仍须重启宿主一次**，后续版本才可连续换代。操作、边界和失败恢复见 [HOT_RELOAD](docs/HOT_RELOAD.md)。
+
 ## 安装和启用
 
-1. 仅安装成功 Actions 运行中 `EdifierXCorolos-v0.1.0-signed-*` 产物里的 Release APK，核对 `SHA256SUMS.txt` 和 `signature-report.txt`。Debug APK 仅用于开发，证书不同，不能与 Release 直接互相覆盖。
+1. 仅安装成功 Actions 运行中 `EdifierXCorolos-v0.2.0-signed-*` 产物里的 Release APK，核对 `SHA256SUMS.txt` 和 `signature-report.txt`。Debug APK 仅用于开发，证书不同，不能与 Release 直接互相覆盖。
 2. 在支持 API 102 的 LSPosed 中启用模块。基础作用域：`com.android.settings`、`com.oplus.wirelesssettings`。需要验证 Melody/MyDevices 详情页时再勾选 `com.oplus.melody`、`com.heytap.mydevices`。
 3. `com.android.bluetooth` 仅用于可选系统电量实验；默认不勾选，也不要选择系统框架、SystemUI 或 Accessory。APK 建议作用域包含蓝牙包，但代码开关默认关闭，需手工启用才安装该 Hook。
 4. 重启所选宿主进程或手机。打开模块，打开安全总开关、授权“附近设备”，启动前台控制服务。

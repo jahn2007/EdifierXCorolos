@@ -8,6 +8,7 @@ import java.util.concurrent.*;
 import io.github.jahn2007.edifierx.bridge.ControlProvider;
 import io.github.jahn2007.edifierx.hooks.ColorOs15Compat;
 import io.github.jahn2007.edifierx.core.DeviceProfile;
+import io.github.jahn2007.edifierx.util.MainThread;
 
 /** Host-owned AndroidX/COUI preferences: no module Activity masquerading as native UI. */
 public final class NativePreferencePanel implements AutoCloseable {
@@ -19,6 +20,7 @@ public final class NativePreferencePanel implements AutoCloseable {
     private Object category,summary,noise,game;
     private Class<?> preferenceType;
     private volatile boolean closed;
+    private volatile boolean detached=true;
     private long generation;
     private volatile boolean enabled;
     private final java.util.function.BooleanSupplier safety;
@@ -28,8 +30,8 @@ public final class NativePreferencePanel implements AutoCloseable {
         if(closed)return;
         try {if(!safety.getAsBoolean()){main.post(this::close);return;}
             Bundle b=context.getContentResolver().call(ControlProvider.URI,"snapshot",address,null);
-            if(b!=null)main.post(()->{if(closed)return;try{render(b);}catch(Throwable t){failure.accept("PREFERENCE_SIGNATURE_MISMATCH");close();}});
-        }catch(Throwable t){failure.accept("IPC_UNAVAILABLE");main.post(this::close);}
+            if(b!=null&&!closed)main.post(()->{if(closed)return;try{render(b);}catch(Throwable t){failure.accept("PREFERENCE_SIGNATURE_MISMATCH");close();}});
+        }catch(Throwable t){if(!closed){failure.accept("IPC_UNAVAILABLE");main.post(this::close);}}
     }
     private Object create(String simple)throws ReflectiveOperationException{
         ClassLoader loader=screen.getClass().getClassLoader();
@@ -45,7 +47,7 @@ public final class NativePreferencePanel implements AutoCloseable {
         generation=b.getLong("generation");enabled="READY".equals(b.getString("phase"));
         if(category==null){
             preferenceType=Class.forName("androidx.preference.Preference",false,screen.getClass().getClassLoader());
-            category=create("PreferenceCategory");set(category,"setKey",String.class,"edifierx.controls");set(category,"setTitle",CharSequence.class,"EdifierXCorolos · "+profile.model());
+            detached=false;category=create("PreferenceCategory");set(category,"setKey",String.class,"edifierx.controls");set(category,"setTitle",CharSequence.class,"EdifierXCorolos · "+profile.model());
             summary=create("Preference");set(summary,"setSelectable",boolean.class,false);set(summary,"setIcon",int.class,android.R.drawable.ic_lock_silent_mode_off);add(category,summary);
             String[] modes=b.getStringArray("modes");
             if(modes!=null&&modes.length>0){noise=create("ListPreference");set(noise,"setPersistent",boolean.class,false);set(noise,"setTitle",CharSequence.class,"降噪控制");set(noise,"setKey",String.class,"edifierx.noise");
@@ -69,10 +71,20 @@ public final class NativePreferencePanel implements AutoCloseable {
     }
     private void command(String method,String key,Object value){
         if(closed||!enabled)return;enabled=false;long token=generation;
-        worker.execute(()->{try{Bundle args=new Bundle();args.putLong("generation",token);if(value instanceof Boolean on)args.putBoolean(key,on);else args.putString(key,String.valueOf(value));context.getContentResolver().call(ControlProvider.URI,method,address,args);}catch(Throwable t){failure.accept("CONTROL_IPC_FAILED");}});
+        try{worker.execute(()->{if(closed)return;try{Bundle args=new Bundle();args.putLong("generation",token);if(value instanceof Boolean on)args.putBoolean(key,on);else args.putString(key,String.valueOf(value));context.getContentResolver().call(ControlProvider.URI,method,address,args);}catch(Throwable t){if(!closed)failure.accept("CONTROL_IPC_FAILED");}});}catch(RejectedExecutionException ignored){}
     }
     private static String percent(int p){return p<0?"未知":p+"%";}
     private static String label(String key){return switch(key){case "ANC"->"主动降噪";case "WIND"->"抗风噪";case "AMBIENT"->"通透";case "OFF"->"关闭";case "COMFORT"->"舒适降噪";case "LIGHT"->"轻度降噪";default->"未知";};}
-    private void remove(){try{ColorOs15Compat.call(screen,"removePreference",new Class<?>[]{preferenceType},category);}catch(ReflectiveOperationException ignored){}category=null;summary=null;noise=null;game=null;}
-    public void close(){if(closed)return;closed=true;worker.shutdownNow();main.removeCallbacksAndMessages(null);if(category!=null)remove();}
+    private void clearListener(Object preference)throws ReflectiveOperationException{
+        if(preference==null)return;
+        Class<?> listener=Class.forName("androidx.preference.Preference$OnPreferenceChangeListener",false,preference.getClass().getClassLoader());
+        ColorOs15Compat.call(preference,"setOnPreferenceChangeListener",new Class<?>[]{listener},new Object[]{null});
+    }
+    private void remove(){
+        try{clearListener(noise);clearListener(game);ColorOs15Compat.call(screen,"removePreference",new Class<?>[]{preferenceType},category);category=null;summary=null;noise=null;game=null;detached=true;}
+        catch(ReflectiveOperationException|RuntimeException e){detached=false;if(!closed)failure.accept("UI_DETACH_FAILED");}
+    }
+    public boolean isStopped(){return worker.isTerminated()&&detached;}
+    public boolean awaitStopped(){return MainThread.awaitStopped(worker);}
+    public void close(){closed=true;enabled=false;worker.shutdownNow();main.removeCallbacksAndMessages(null);if(category!=null)remove();else detached=true;}
 }

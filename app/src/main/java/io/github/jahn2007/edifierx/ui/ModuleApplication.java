@@ -3,6 +3,7 @@ import android.app.Application;
 import io.github.libxposed.service.*;
 public final class ModuleApplication extends Application {
     public static volatile XposedService framework;
+    public static volatile String hotReloadStatus="未请求热重载";
     public static volatile String frameworkStatus="未收到框架服务：请检查 LSPosed 启用状态";
     @Override public void onCreate(){super.onCreate();XposedServiceHelper.registerListener(new XposedServiceHelper.OnServiceListener(){
         public void onServiceBind(XposedService service){framework=service;frameworkStatus=service.getFrameworkName()+" API "+service.getApiVersion();publish();}
