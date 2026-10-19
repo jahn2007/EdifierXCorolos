@@ -2,6 +2,8 @@
 
 单元测试只在 Actions 执行。运行39253805018与39254093439的31项测试、Lint、Debug/R8 Release及APK结构检查已通过；这不是实机验收。ProtocolTest 覆盖公开录制样本解码、两套帧/校验、分包粘包、错误长度与校验、回声拒绝、缓存上限、Evo/FitBuds加密差异、型号名+UUID、TWS未知/盒离线、非法百分比、不支持型号和危险指令白名单。
 
+最新运行39254456996已通过32项测试，新增“错误ANC槽位不能解锁写入”和“无效回读不能复用ACK状态判成功”回归检查。
+
 SessionTest 使用明确命名的测试 Fake transport 验证 FIFO/在途限制、超时关闭并取消后续命令、队列界限、代际隔离、断线清理、重连、写入ACK+回读、连续点击拒绝。Fake只在测试源码中，应用不会加载它。公开来源采集与合成ACK样本分别标注，不能称本项目设备录制。
 
 CI Lint、Debug/Release编译、DEX/manifest/模块元数据和签名是独立检查。Python static_check只检查源码合同，不替代编译或测试。Android实际 GATT 回调、射频传输、Binder UID策略与宿主生命周期仍需设备验收；core单元测试不等于这些实机PASS。

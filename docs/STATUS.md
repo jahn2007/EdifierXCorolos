@@ -15,7 +15,7 @@
 |Evo游戏/手势/EQ/其他进阶项|无|无，隐藏|无本型号命令证据|否|
 |OPlus原生三电量/专属MyDevices卡片|无|无|缺ColorOS15 ABI|否|
 |官方连接/开盖弹窗|无|无|缺ColorOS15接口及开盖事件|否|
-|Release签名/Artifact|Debug/unsigned已上传；正式签名失败|既有Secret映射已配置|不适用|不适用|
+|Release签名/Artifact|Debug/unsigned已上传；store密码校验失败|既有Secret映射已配置|不适用|不适用|
 
 已验证漫步者型号（本项目硬件实测）：**无**。上游协议证据不冒充本项目硬件测试。
 
@@ -35,3 +35,16 @@
 - [39254093439](https://github.com/jahn2007/EdifierXCorolos/actions/runs/39254093439)：build再次成功；签名诊断确认既有keystore无法打开或ALIAS未匹配，尚未生成正式签名APK。正进一步区分store密码/格式与alias问题，不更换用户证书。
 
 公开Actions页面可查看阶段结果与编译错误注解，完整日志和Artifact下载需GitHub登录/API权限。没有把Artifact ZIP的digest称为APK SHA256。最终APK的单文件SHA256由CI独立计算，放在Artifact的SHA256SUMS.txt和notice注解。
+
+## 最新验收结果（源码 1c42a0b）
+
+[Actions 39254456996](https://github.com/jahn2007/EdifierXCorolos/actions/runs/39254456996)：
+
+- build **SUCCESS**：32项单元测试（0失败/跳过）、Lint、Debug APK、R8 Release APK、Manifest/DEX入口/API102元数据校验通过。
+- [构建产物](https://github.com/jahn2007/EdifierXCorolos/actions/runs/39254456996/artifacts/12186896752)：Debug APK、明确标记unsigned的Release APK及结构报告。需要GitHub登录下载。
+- Debug APK单文件SHA-256：`be29ee652dbb0038fc54ad299c94b31388c770e053836f2ae8aaa7e7dcf7fba2`，来自构建步骤的实际SHA256 notice，不是artifact ZIP digest。
+- sign **FAILURE**，固定诊断码：`EXISTING_KEYSTORE_PASSWORD_REJECTED`。KEYSTORE_BASE64解码成功，但keytool在打开既有keystore时拒绝KEYSTORE_PASSWORD。alias和KEY_PASSWORD尚未校验。没有生成/替换证书，没有回退debug签名。
+- 用户只需在GitHub Actions Secrets中核对**既有**KEYSTORE_BASE64与KEYSTORE_PASSWORD的对应关系；不要发密钥/密码到聊天，不要新建key作为修复。修正后浏览器Actions手动运行同一工作流，或告知后继续通过推送触发。
+- 本项目真实手机/耳机测试仍全部UNRUN，官方APK静态分析仍受32MiB附件传输限制。
+
+后续仅文档/文件分卷工具提交使用skip-ci；APK代码的验证提交固定为1c42a0b，不把之后文档提交冒充已重新构建。

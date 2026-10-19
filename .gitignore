@@ -10,3 +10,6 @@ local.properties
 captures/
 keystore.properties
 .idea/
+apk-parts/
+*.part[0-9]*
+*.apk.*
