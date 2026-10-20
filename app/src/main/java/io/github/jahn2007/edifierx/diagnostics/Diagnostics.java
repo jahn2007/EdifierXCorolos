@@ -19,7 +19,7 @@ public final class Diagnostics {
         if(!enabled)return;
         String line=EVENTS.append(System.currentTimeMillis(),component,code);
         WRITER.execute(()->{try{Path p=file;if(p==null)return;if(Files.exists(p)&&Files.size(p)>262144)Files.move(p,p.resolveSibling("diagnostics.previous.log"),StandardCopyOption.REPLACE_EXISTING);
-            Files.writeString(p,line+"\n",StandardCharsets.UTF_8,StandardOpenOption.CREATE,StandardOpenOption.APPEND);
+            Files.write(p,(line+"\n").getBytes(StandardCharsets.UTF_8),StandardOpenOption.CREATE,StandardOpenOption.APPEND);
         }catch(IOException e){DROPPED.incrementAndGet();}});
     }
     public static void failure(String component,String stage,Throwable error){
@@ -36,7 +36,7 @@ public final class Diagnostics {
     public static String export(){
         CompletableFuture<String> result=new CompletableFuture<>();
         WRITER.execute(()->{try{StringBuilder b=new StringBuilder();Path p=file;
-            if(p!=null)for(Path part:new Path[]{p.resolveSibling("diagnostics.previous.log"),p})if(Files.exists(part))b.append(Files.readString(part)).append('\n');
+            if(p!=null)for(Path part:new Path[]{p.resolveSibling("diagnostics.previous.log"),p})if(Files.exists(part))b.append(new String(Files.readAllBytes(part),StandardCharsets.UTF_8)).append('\n');
             result.complete(b.toString());
         }catch(IOException e){result.completeExceptionally(e);}});
         try{return summary()+"\n"+result.get(3,TimeUnit.SECONDS);}catch(InterruptedException e){Thread.currentThread().interrupt();return summary()+"\nEXPORT_INTERRUPTED\n"+EVENTS.text();}
