@@ -2,7 +2,11 @@
 
 ## 0.2.2 零广播诊断与官方身份采集
 
-根据用户PHK110_15.0.0.830(CN01)报告：0.2.1两次扫描reports=0；权限、服务、安全开关正常，未进入RFCOMM；用户确认官方App可正常控制。该构建的首次广播发现记为用户实测FAIL，协议和面板仍未执行，不能标PASS。0.2.2增加默认关闭的官方8.5.3被动D8身份采集（独立UID/证书门禁），以及有限软件观察和批量扫描诊断；新版本待Actions验证。新增10项测试，共67项。具体证据和手机步骤见[零广播处理](ZERO_ADVERTISEMENT.md)。
+根据用户PHK110_15.0.0.830(CN01)报告：0.2.1两次扫描reports=0；权限、服务、安全开关正常，未进入RFCOMM；用户确认官方App可正常控制。该构建的首次广播发现记为用户实测FAIL，协议和面板仍未执行，不能标PASS。0.2.2增加默认关闭的官方8.5.3被动D8身份采集（独立UID/证书门禁），以及有限软件观察和批量扫描诊断；源码`834cd4f3e73bb36ed840365051532b822e98f29d`已由[Actions39444441994](https://github.com/jahn2007/EdifierXCorolos/actions/runs/39444441994)验证：67项测试，0失败/错误/跳过；Lint、Debug/R8 Release、API102入口/六作用域/热重载元数据及Debug v2签名校验通过；发布SUCCESS，正式签名SKIPPED。新增官方回调、跨UID身份传递、模块READY及原生面板仍待手机验证。具体证据和手机步骤见[零广播处理](ZERO_ADVERTISEMENT.md)。
+
+[直接下载0.2.2 Debug APK](https://github.com/jahn2007/EdifierXCorolos/releases/download/debug-v0.2.2-build14/EdifierXCorolos-v0.2.2-debug.apk)（2770707 bytes），[Release页面](https://github.com/jahn2007/EdifierXCorolos/releases/tag/debug-v0.2.2-build14)。已无登录实际下载，单文件SHA256与校验文件及Release asset digest匹配：`52d6ddce086b8c77d4e78e9ad4201803cc202e8e5d6f7ae6c831b3168ba714bf`。
+
+[构建产物](https://github.com/jahn2007/EdifierXCorolos/actions/runs/39444441994/artifacts/12274714843) · [67项测试报告](https://github.com/jahn2007/EdifierXCorolos/actions/runs/39444441994/artifacts/12274819738)。Debug证书SHA256为`4910a4c3c7dde405dfa7037240caa883dc47c603b6f9c1103e3501c273ff244b`，与build13不同，不能直接覆盖；卸载重装会清除绑定和配置，不是热重载验证。没有读取或修改用户正式签名密钥。
 
 ## 0.2.1 改名识别与详细日志
 

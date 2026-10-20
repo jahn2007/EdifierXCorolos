@@ -29,7 +29,7 @@ IPC接收端额外检查官方包名、UID及签名SHA256：`c897b7355f389365c7c
 
 ## 手机操作（无需新工具）
 
-1. 安装0.2.2。不同Debug证书不能覆盖；卸载重装会清除模块配置。正式签名仍默认关闭。
+1. [下载并安装0.2.2 build14](https://github.com/jahn2007/EdifierXCorolos/releases/download/debug-v0.2.2-build14/EdifierXCorolos-v0.2.2-debug.apk)。不同Debug证书不能覆盖；卸载重装会清除模块配置。正式签名仍默认关闭。
 2. 启用模块，基础作用域Settings/WirelessSettings；本次**额外勾选`com.edifier.edifierconnect`**。Bluetooth核心作用域暂时不用开启。
 3. 打开模块，开启安全总开关、详细日志和“从官方App采集首次身份”，授权附近设备并启动控制服务。
 4. 在系统“应用信息”强行停止官方漫步者App，再重新打开官方**8.5.3(300)**，正常连接Evo Pro并进入控制页。这是为让D8接收回调在开启观察后重新发生，不要取消配对。
@@ -46,4 +46,4 @@ IPC接收端额外检查官方包名、UID及签名SHA256：`c897b7355f389365c7c
 
 ## 验证状态
 
-报告已确认0.2.1在此PHK110构建的广播身份发现失败；RFCOMM、ANC、电量、系统面板尚未执行，不标PASS。0.2.2新增10项安全策略/观察门禁回归，共67项，构建结果见STATUS。真实官方App回调、跨UID传递、扫描和ColorOS页面仍待上述手机测试。
+报告已确认0.2.1在此PHK110构建的广播身份发现失败；RFCOMM、ANC、电量、系统面板尚未执行，不标PASS。0.2.2新增10项安全策略/观察门禁回归，共67项，已由[Actions39444441994](https://github.com/jahn2007/EdifierXCorolos/actions/runs/39444441994)全部通过（0失败/错误/跳过）；Lint、Debug/R8编译、API102元数据和Debug v2签名校验通过。正式签名跳过，APK已发布并实际下载校验，散列见STATUS。真实官方App回调、跨UID传递、扫描和ColorOS页面仍待上述手机测试。

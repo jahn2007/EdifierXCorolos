@@ -1,6 +1,6 @@
 # EdifierXCorolos
 
-**[直接下载 v0.2.1 Debug APK](https://github.com/jahn2007/EdifierXCorolos/releases/download/debug-v0.2.1-build13/EdifierXCorolos-v0.2.1-debug.apk)** · [所有开发构建](https://github.com/jahn2007/EdifierXCorolos/releases)
+**[直接下载 v0.2.2 Debug APK](https://github.com/jahn2007/EdifierXCorolos/releases/download/debug-v0.2.2-build14/EdifierXCorolos-v0.2.2-debug.apk)** · [所有开发构建](https://github.com/jahn2007/EdifierXCorolos/releases)
 
 为 OnePlus Ace 2 / PHK110、ColorOS 15 / Android 15 开发的 Modern libxposed API 102 模块。**优先适配花再 Evo Pro**。目标是系统蓝牙详情页内的真实耳机控制，不以普通 App 页面代替原生控制。
 
@@ -19,13 +19,13 @@
 
 Evo Pro 游戏模式、EQ、手势、入耳检测、官方连接/开盖弹窗、MyDevices 专属卡片与 OPlus TWS 原生三电量接口仍需要对应型号/ColorOS 15 证据；**不会显示假开关**。兼容候选 Profile 见 [协议报告](docs/PROTOCOL_ANALYSIS.md)，不承诺官方 App 全型号已适配。
 
-最新 [CI运行](https://github.com/jahn2007/EdifierXCorolos/actions/runs/39434063178) 已通过57项测试、Lint和APK编译/结构检查；当前默认关闭正式签名，提供可安装调试的Debug APK和未签名Release APK；以后可手动勾选sign_release启用既有证书签名。热重载尚待实机验收。
+最新 [CI运行](https://github.com/jahn2007/EdifierXCorolos/actions/runs/39444441994) 已通过67项测试、Lint和APK编译/结构检查；当前默认关闭正式签名，提供可安装调试的Debug APK和未签名Release APK；以后可手动勾选sign_release启用既有证书签名。热重载尚待实机验收。
 
 支持 API 102 自动/手动热重载，更新APK后可更换已注入宿主的Hook代码；会清理旧代控件、监听器与线程。**从0.1.0首次升级后仍须重启宿主一次**，后续同证书版本才可连续换代；当前临时Debug构建的证书限制见安装步骤。操作、边界和失败恢复见 [HOT_RELOAD](docs/HOT_RELOAD.md)。
 
 ## 安装和启用
 
-1. 当前优先从上方 Release 页面下载 Assets 中的 `EdifierXCorolos-v0.2.1-debug.apk` 并安装，核对同页 `DEBUG-SHA256SUMS.txt`。也可登录 GitHub 后从成功 Actions 的独立 `EdifierXCorolos-v0.2.1-debug-*` artifact 下载 ZIP 并解压得到 APK；同包的 unsigned Release APK不能直接安装。以后启用正式签名时，从 `EdifierXCorolos-v0.2.1-signed-*` 获取正式版并核对 `signature-report.txt`。Debug与正式版证书不同，不能直接互相覆盖。本次build13与之前build11的Debug证书也不同，不能覆盖安装或用它验证跨构建热重载；如需安装新版，卸载旧Debug会清除模块配置，先保留诊断信息，按下文重新授权和连接。
+1. 当前优先从上方 Release 页面下载 Assets 中的 `EdifierXCorolos-v0.2.2-debug.apk` 并安装，核对同页 `DEBUG-SHA256SUMS.txt`。也可登录 GitHub 后从成功 Actions 的独立 `EdifierXCorolos-v0.2.2-debug-*` artifact 下载 ZIP 并解压得到 APK；同包的 unsigned Release APK不能直接安装。以后启用正式签名时，从 `EdifierXCorolos-v0.2.2-signed-*` 获取正式版并核对 `signature-report.txt`。Debug与正式版证书不同，不能直接互相覆盖。本次build14与之前build13的Debug证书也不同，不能覆盖安装或用它验证跨构建热重载；如需安装新版，卸载旧Debug会清除模块配置，先保留诊断信息，按下文重新授权和连接。
 2. 在支持 API 102 的 LSPosed 中启用模块。基础作用域：`com.android.settings`、`com.oplus.wirelesssettings`。需要验证 Melody/MyDevices 详情页时再勾选 `com.oplus.melody`、`com.heytap.mydevices`。
 3. `com.android.bluetooth` 仅用于可选系统电量实验；默认不勾选，也不要选择系统框架、SystemUI 或 Accessory。APK 建议作用域包含蓝牙包，但代码开关默认关闭，需手工启用才安装该 Hook。
 4. 重启所选宿主进程或手机。打开模块，打开安全总开关、授权“附近设备”，启动前台控制服务。
@@ -43,6 +43,6 @@ Evo Pro 游戏模式、EQ、手势、入耳检测、官方连接/开盖弹窗、
 
 [架构](docs/ARCHITECTURE.md) · [协议](docs/PROTOCOL_ANALYSIS.md) · [ColorOS 15](docs/COLOROS15_COMPAT.md) · [测试](docs/TESTING.md) · [来源](docs/REFERENCES.md)
 
-0.2.1详细诊断默认关闭；开启后采集识别、协议和宿主阶段，保存在本机有界轮转日志中。关闭后仍可导出，手工清空才删除。日志说明和本轮验证见[STATUS](docs/STATUS.md)。上方链接为Actions39434063178验证通过的0.2.1 build13。
+详细诊断默认关闭；开启后采集识别、协议和宿主阶段，保存在本机有界轮转日志中。关闭后仍可导出，手工清空才删除。日志说明和本轮验证见[STATUS](docs/STATUS.md)。上方链接为Actions39444441994验证通过的0.2.2 build14。
 
-0.2.2新增默认关闭的官方8.5.3首次身份采集，用于已改名、系统已连接且模块收不到广播的设备；需额外选择官方App作用域并在模块开启此项。[完整操作步骤](docs/ZERO_ADVERTISEMENT.md)。正式签名仍关闭，新版下载将在本轮CI验证后更新。
+0.2.2新增默认关闭的官方8.5.3首次身份采集，用于已改名、系统已连接且模块收不到广播的设备；需额外选择官方App作用域并在模块开启此项。[完整操作步骤](docs/ZERO_ADVERTISEMENT.md)。正式签名仍关闭。该路径已编译，但官方App回调、跨UID传递和本机READY仍需手机验证；系统面板尚未标记实机通过。
