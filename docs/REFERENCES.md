@@ -31,3 +31,7 @@ libxposed/api与example的Git克隆分别返回Repository not found；main/maste
 - https://libxposed.github.io/api/ （运行环境尚待网络策略应用，不声称已阅读全文）
 
 许可证见NOTICE。协议事实用独立有界Java实现；公开抓包fixture注明出处。官方APK和宿主APK仅作为研究材料，不分发其代码或产品图。
+
+## 官方 APK 静态证据
+
+2026-10-20 实际分析私有附件8.5.3(300)，包名com.edifier.edifierconnect。SHA256、DEX定位、产品ID290及345条内置产品研究目录见[官方APK报告](OFFICIAL_APK_ANALYSIS.md)。仅发布分析事实，不分发APK、完整配置、反编译代码或厂商图片。

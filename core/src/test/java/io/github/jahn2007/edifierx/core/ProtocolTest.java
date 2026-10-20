@@ -20,6 +20,11 @@ public class ProtocolTest {
     @Test public void caseChargingSample(){var f=new WireCodec(WireCodec.Dialect.BES).offer(hex("BB EC F2 00 06 A6 9C A3 E3 A4 B4 BF")).get(0);var b=Battery.parse(evo(),f);assertEquals(70,b.caseLevel());assertTrue(b.caseCharging());assertEquals(6,b.systemLevel());}
     @Test public void invalidBatteryDoesNotBecomeDisconnected(){assertNull(Battery.parse(evo(),new WireCodec.Frame(0xF2,hex("A6 5A C7 A5 A6 B4"))));}
     @Test public void truncatedTwsRejected(){assertNull(Battery.parse(evo(),new WireCodec.Frame(0xF2,hex("A6 C1 C7"))));}
+    // Synthetic regressions from official APK parseTWSBattery semantics, not HCI captures.
+    @Test public void leftOnlyReportClearsStaleRightBattery(){var b=Battery.parse(evo(),new WireCodec.Frame(0xF2,hex("A4 C1 C7 A5 A6 B4")));assertNotNull(b);assertEquals(100,b.left());assertEquals(-1,b.right());assertEquals(100,b.systemLevel());}
+    @Test public void rightOnlyReportClearsStaleLeftBattery(){var b=Battery.parse(evo(),new WireCodec.Frame(0xF2,hex("A7 C1 C7 A5 A6 B4")));assertNotNull(b);assertEquals(-1,b.left());assertEquals(98,b.right());assertEquals(98,b.systemLevel());}
+    @Test public void singleHeadphoneLayoutCannotUnlockTwsProfile(){assertNull(Battery.parse(evo(),new WireCodec.Frame(0xF2,hex("A1 C1 C7 A5 A6 B4"))));}
+    @Test public void unknownTwsLayoutRejected(){for(int layout:new int[]{0,5,8,9,255}){byte[] payload=hex("A6 C1 C7 A5 A6 B4");payload[0]=(byte)(layout^0xA5);assertNull(Battery.parse(evo(),new WireCodec.Frame(0xF2,payload)));}}
     @Test public void nameAloneInsufficient(){assertTrue(DeviceProfile.match("EDIFIER Evo Pro",Set.of()).isEmpty());assertTrue(DeviceProfile.match("EDIFIER Other",Set.of(DeviceProfile.SPP)).isEmpty());}
     @Test public void exactEvoPlusSdp(){assertEquals("evo-pro",DeviceProfile.match("EDIFIER Evo Pro",Set.of(DeviceProfile.SPP.toUpperCase(Locale.ROOT))).orElseThrow().id());}
     @Test public void aliasesAreNotSubstringMatches(){assertTrue(DeviceProfile.match("My Evo Pro Speaker",Set.of(DeviceProfile.SPP)).isEmpty());}

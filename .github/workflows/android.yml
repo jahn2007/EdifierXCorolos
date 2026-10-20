@@ -47,7 +47,7 @@ jobs:
           import pathlib,xml.etree.ElementTree as ET
           suites=[ET.parse(p).getroot() for p in pathlib.Path('core/build/test-results/test').glob('TEST-*.xml')]
           count=sum(int(s.attrib['tests']) for s in suites)
-          assert count>=40, f'Expected >=40 executed tests, got {count}'
+          assert count>=44, f'Expected >=44 executed tests, got {count}'
           assert sum(int(s.attrib.get('skipped',0))+int(s.attrib.get('failures',0))+int(s.attrib.get('errors',0)) for s in suites)==0
           print(f'{count} tests executed and passed')
           PYCODE
@@ -59,7 +59,7 @@ jobs:
           (cd artifacts && sha256sum *.apk > SHA256SUMS.txt)
           cat artifacts/SHA256SUMS.txt >> "$GITHUB_STEP_SUMMARY"
           python3 tools/apk_summary.py artifacts/EdifierXCorolos-v0.2.0-debug.apk
-          echo '40 unit tests, lint, debug and R8 release compile, APK metadata: PASS' >> "$GITHUB_STEP_SUMMARY"
+          echo '44 or more unit tests, lint, debug and R8 release compile, APK metadata: PASS' >> "$GITHUB_STEP_SUMMARY"
       - name: Upload APKs
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:

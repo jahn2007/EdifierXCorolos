@@ -1,5 +1,9 @@
 # 当前交付状态
 
+## 2026-10-20 官方 APK 研究与单耳电量修正
+
+已校验并分析用户官方8.5.3 APK，定位Evo Pro官方产品ID290、BES/SPP配置和通用编解码；整理345条静态产品研究记录。实际证据及限制见[官方报告](OFFICIAL_APK_ANALYSIS.md)。修正F2单耳布局清理另一耳电量，拒绝单设备及未知布局解锁TWS Profile，新增4项合成回归用例，总数44；本次Actions结果待运行后补记。未启用无本型号运行证据的游戏/EQ/手势命令，真实手机/耳机仍全部UNRUN。
+
 ## APK直接下载已验证
 
 [Debug APK直链](https://github.com/jahn2007/EdifierXCorolos/releases/download/debug-v0.2.0-build10/EdifierXCorolos-v0.2.0-debug.apk)（2696804 bytes），[Release页面](https://github.com/jahn2007/EdifierXCorolos/releases/tag/debug-v0.2.0-build10)。
@@ -53,7 +57,7 @@ API102 自动/手动热重载已实现；源码提交7859052，签名安全诊�
 
 ## 外部限制
 
-- 官方APK附件超过文件下载工具32MiB上限，未取得字节，未进行该APK静态分析，未枚举它的全部支持型号。
+- 官方APK传输限制已解决：2026-10-20十个分卷及整体散列通过，已读取并分析，详见[官方报告](OFFICIAL_APK_ANALYSIS.md)。内置345条产品记录已枚举，尚未全部适配。
 - GitHubAPI初始CONNECT403，无法读取Secrets名称（后由用户明确提供）及Actions运行；Git读成功，写权限/运行结果以实际后续命令为准。
 - 无PHK110、Evo Pro、固件版本或ColorOS15宿主APK，不能完成实际控制/媒体/通话/官方弹窗验收。
 
@@ -77,10 +81,10 @@ API102 自动/手动热重载已实现；源码提交7859052，签名安全诊�
 - Debug APK单文件SHA-256：`be29ee652dbb0038fc54ad299c94b31388c770e053836f2ae8aaa7e7dcf7fba2`，来自构建步骤的实际SHA256 notice，不是artifact ZIP digest。
 - sign **FAILURE**，固定诊断码：`EXISTING_KEYSTORE_PASSWORD_REJECTED`。KEYSTORE_BASE64解码成功，但keytool在打开既有keystore时拒绝KEYSTORE_PASSWORD。alias和KEY_PASSWORD尚未校验。没有生成/替换证书，没有回退debug签名。
 - 用户只需在GitHub Actions Secrets中核对**既有**KEYSTORE_BASE64与KEYSTORE_PASSWORD的对应关系；不要发密钥/密码到聊天，不要新建key作为修复。修正后浏览器Actions手动运行同一工作流，或告知后继续通过推送触发。
-- 本项目真实手机/耳机测试仍全部UNRUN，官方APK静态分析仍受32MiB附件传输限制。
+- 历史运行时官方APK尚未读取；2026-10-20分卷解决后已完成静态分析。本项目真实手机/耳机测试仍全部UNRUN。
 
-后续仅文档/文件分卷工具提交使用skip-ci；APK代码的验证提交固定为1c42a0b，不把之后文档提交冒充已重新构建。
+后续仅文档/文件分卷工具提交使用skip-ci；当时APK代码的验证提交为1c42a0b，不把之后文档提交冒充已重新构建。
 
-## 0.2.0 当前工作
+## 0.2.0 热重载开发历史
 
-API102自动/手动热重载已集成源码；旧代门禁、Preference回调/线程清理、Bluetooth worker关闭、稳定Hook替换及失败回滚均已实现。新增8个JVM回归用例，总数40，编译和正式签名待新运行验证。用户已修复签名配置，下面历史0.1.0签名错误不代表本轮结果。热重载实机仍UNRUN，初次从0.1.0升级需先重启宿主。
+API102自动/手动热重载已集成源码；旧代门禁、Preference回调/线程清理、Bluetooth worker关闭、稳定Hook替换及失败回滚均已实现。新增8个JVM回归用例，总数40，当时编译和正式签名待验证，后续结果见本文件上方运行记录；当前正式签名按用户要求关闭。热重载实机仍UNRUN，初次从0.1.0升级需先重启宿主。

@@ -11,8 +11,13 @@ public record Battery(int aggregate, int left, int right, int caseLevel, boolean
         byte[] b=p.decode(frame.payload());
         if(p.batteryCommand()==0xD0) return b.length==1&&(b[0]&255)<=100?new Battery(b[0]&255,-1,-1,-1,false):null;
         if(b.length<5)return null;
+        // Official parseTWSBattery: 1 = left only, 2 = right only, 3 = peer TWS.
+        // Other layouts include single headphones (4) and speakers; they must not
+        // unlock a TWS profile merely because their percentage bytes look valid.
+        int layout=b[0]&255;
+        if(layout<1||layout>3)return null;
         int left=b[1]&255,right=b[2]&255,box=b[3]&255,state=b[4]&255;
         if(left>100||right>100||box>100||state<1||state>3)return null;
-        return new Battery(-1,left==0?-1:left,right==0?-1:right,state==3?-1:box,state==1);
+        return new Battery(-1,layout==2||left==0?-1:left,layout==1||right==0?-1:right,state==3?-1:box,state==1);
     }
 }

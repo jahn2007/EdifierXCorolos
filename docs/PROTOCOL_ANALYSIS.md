@@ -4,7 +4,7 @@
 
 优先花再 Evo Pro。`CONFIRMED` 指该命令有对应型号公开实机证据，**不是本项目已做实机验证**；`REFERENCE_ONLY` 为其他型号/未完成本型号验证；`HYPOTHESIS` 不进入发送路径；`UNSUPPORTED` 不实现。还应分别查看编译、源码集成、协议样本、实机四种状态。
 
-上传文件名为 `EC_v8.5.3_300-jiagu_1791626658.apk`。文件传输工具明确返回 **file exceeds the executor transfer limit of 32 MiB**，当前未读取字节，故不报告其 SHA-256、包名、Manifest、权限、DEX、UUID 或反编译结论；文件名中的 jiagu 也不构成已确认加壳证据。所有下列协议证据来自公开源码，未把它冒充该 APK 的分析结果。APK/厂商素材不提交公开仓库。
+已于 2026-10-20 收齐十个分卷，完成逐卷及整体校验，并实际静态读取官方 `8.5.3 (300)` APK。完整 SHA-256 为 `346270d7a8d924a204f96f4cb011f9b4819df79fc609454cd651470d75571229`，包名 `com.edifier.edifierconnect`。证据、方法定位和反编译局限见 [官方 APK 分析](OFFICIAL_APK_ANALYSIS.md)，内置345条产品研究目录见 [CSV](OFFICIAL_MODEL_CATALOG.csv)。目录不等于全部已适配。APK/完整配置/反编译源码/厂商素材不提交公开仓库。
 
 ## Evo Pro 的已知通道与帧
 
@@ -14,10 +14,10 @@ RFCOMM SDP UUID：`EDF00000-EDFE-DFED-FEDF-EDFEDFEDFEDF`，使用 public secure 
 
 |功能|型号|命令/参数|回应解码与校验|握手/订阅|证据和等级|未确认问题|
 |---|---|---|---|---|---|---|
-|组件电量读取|花再 Evo Pro|F2，无参数|XOR 后至少 5 字节；byte0 metadata，byte1/2 左右耳，byte3 盒，byte4 盒状态；1 charging/2 not charging/3 offline；耳 0 表未知；范围 0..100|无额外配对绕过；作为只读就绪探测，保持 RFCOMM 读循环|HyperEars EdifierWireCodec 与测试，`CONFIRMED`（上游采集）|本设备固件和通知频率待实测；盒 offline 时不显示百分比|
-|降噪读取|花再 Evo Pro|CC，无参数|XOR 后 `[1B,value]`；1/2/3 ANC（细分名称待确认）/4 抗风/5 通透/6 关闭|READY 要求此槽位匹配；无额外订阅命令|EdifierAncDialects.EVO_PRO，`CONFIRMED`（上游）|各固件主动通知/延迟需实测|
+|组件电量读取|花再 Evo Pro|F2，无参数|XOR 后至少 5 字节；byte0 布局1左单耳/2右单耳/3双耳（缺席耳清空），byte1/2 左右耳，byte3 盒，byte4 盒状态；1 charging/2 not charging/3 offline；耳 0 表未知；范围 0..100|无额外配对绕过；作为只读就绪探测，保持 RFCOMM 读循环|HyperEars EdifierWireCodec 与测试，`CONFIRMED`（上游采集）；官方 parseTWSBattery 静态交叉核对|本设备固件和通知频率待实测；盒 offline 时不显示百分比|
+|降噪读取|花再 Evo Pro|CC，无参数|XOR 后 `[1B,value]`；1/2/3 ANC（官方group27静态名称见报告）/4 抗风/5 通透/6 关闭|READY 要求此槽位匹配；无额外订阅命令|EdifierAncDialects.EVO_PRO，`CONFIRMED`（上游）|各固件主动通知/延迟需实测|
 |降噪写入|花再 Evo Pro|C1；明文 `[1B,01/04/05/06]` 后 XOR|等待 C1 ACK，再冷却 2 秒并 CC 回读；不能只收到 socket write 就报成功|必须电量及 ANC 握手通过|EdifierEvoProAdapter 与 writeValues，`CONFIRMED`（上游）|2/3 只有读取映射，未进入正式写入选项；本机 ACK/回读时序待实测|
-|游戏模式|花再 Evo Pro|08/09 不能因其他型号存在而直接使用|无本型号启用路径|不探测|`REFERENCE_ONLY`|上游 Evo Profile 没开启 gameModeQuery；需 Evo 定向采集|
+|游戏模式|花再 Evo Pro|08/09 不能因其他型号存在而直接使用|无本型号启用路径|不探测|`REFERENCE_ONLY`|官方 D8 byte17 bit6 控制游戏能力，实际 Evo D8 未取得；上游未启用，需定向采集|
 |版本/设备名/功能表|花再 Evo Pro|C6/C9/D8 存在家族参考|当前不发送，避免未确认响应格式参与身份判定|不适用|`REFERENCE_ONLY`|型号/固件响应字段未确认|
 |手势/EQ/入耳/双连/查找/空间音效|花再 Evo Pro|无已验证本型号白名单|无写入|不适用|`UNSUPPORTED`|需官方 App 定向单变量采集|
 |固件升级/重置/关机/重配|全部|禁止发送 07/CD/CE/CF/D1 等危险命令|不提供任意命令入口|不适用|`UNSUPPORTED`|默认不研究/实现 OTA 写入|
@@ -30,7 +30,7 @@ BB EC F2 00 06 A6 C1 C7 A5 A6 B4 CC  回应解码 03 64 62 00 03 11：左100，�
 BB EC CC 00 02 BE A3 D6              降噪回应解码 1B 06：关闭
 ```
 
-Noise value 1/2/3 按上游仅显示“主动降噪”，不猜测各等级官方名称；正式写入只使用上游明确列出的 1/4/5/6。测试中的 ACK 变体为按公开帧规则生成的合成向量，与公开实录样本分开标注。
+官方 group27 静态映射为高/中/宽频降噪，但本用户固件未验证；当前 Noise value 1/2/3 仍按上游仅显示“主动降噪”，正式写入只使用上游明确列出的 1/4/5/6。测试中的 ACK 变体为按公开帧规则生成的合成向量，与公开实录样本分开标注。
 
 ## 其他明确型号与差异
 
@@ -47,4 +47,4 @@ legacy 帧：`AA LEN CMD PAYLOAD SUM_H SUM_L`，LEN=payload+1；校验 `0x2019 +
 
 ## 后续证据采集
 
-见 [CAPTURE](CAPTURE.md)。需取得 APK 可读取副本、Evo Pro 当前固件、官方 App 单变量日志、ColorOS 15 宿主版本/可合法提供的组件 APK。不会运行参考 poc.py 的扫描/爆破循环。配对认证、firmware 安全机制和 SELinux 保持不变。
+见 [CAPTURE](CAPTURE.md)。APK 已完成静态分析，仍需 Evo Pro 当前固件、官方 App 单变量日志、ColorOS 15 宿主版本/可合法提供的组件 APK。不会运行参考 poc.py 的扫描/爆破循环。配对认证、firmware 安全机制和 SELinux 保持不变。

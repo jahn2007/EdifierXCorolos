@@ -6,6 +6,8 @@
 
 当前为 **0.2.0 开发版本**。源码中的系统集成和协议实现不等于 PHK110 实测成功；构建结果、协议证据、宿主兼容与实机验收分别记录在 [STATUS](docs/STATUS.md)。尚无本项目实机验证型号，勿称最终稳定版。
 
+官方8.5.3 APK现已通过十个分卷完整校验并完成静态分析，定位Evo Pro产品ID290及SPP配置，详见[分析报告](docs/OFFICIAL_APK_ANALYSIS.md)。内置345条产品记录仅作研究目录，不等于全部适配。
+
 ## 已实现代码
 
 - 安全的分包 Hook，宿主 ClassLoader、Android 15/品牌门禁、Fragment 生命周期与原生 Preference 插入。找不到地址、Preference 锚点或签名时保留原页面。
