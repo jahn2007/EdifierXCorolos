@@ -49,3 +49,7 @@ OPlus 三组件通道、官方连接弹窗和 MyDevices 专属卡片没有 Color
 ## 0.2.0 热重载
 
 入口实现API102 onHotReloading/onHotReloaded，稳定Hook ID和精确Executable匹配，旧代先停止异步资源，新代replaceHook与回滚。主线程UI拆卸和工作线程终止都有明确完成条件；不能完成清理时拒绝换代。框架服务返回opaque target并异步报告真实状态，详见[HOT_RELOAD](HOT_RELOAD.md)。APK更新可能结束模块App服务，需要重新连接耳机，这与宿主Hook换代分开。
+
+## 0.2.2 可选官方身份源
+
+OfficialIdentityInstaller只观察官方8.5.3的有效D8接收和当前产品/SPP端点；独立IPC路由要求原官方证书与UID，仅接收短时身份候选，不开放控制。真正写入仍需模块自己的F2/ANC验证。厂商App范围不进入系统宿主控制白名单。元数据scope共六项，officialIdentity开关默认false。详见ZERO_ADVERTISEMENT.md。

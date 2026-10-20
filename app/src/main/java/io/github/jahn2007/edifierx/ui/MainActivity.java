@@ -35,6 +35,7 @@ public final class MainActivity extends Activity {
         toggle("安全总开关", "enabled",()->{if(!getSharedPreferences("local",0).getBoolean("enabled",false)){discovery.cancel();stopService(new Intent(this,ControlService.class));}});
         toggle("系统电量桥接（实验，默认关闭；需勾选蓝牙作用域并重启其进程）","battery",()->{});
         toggle("详细诊断（默认关闭，记录到本机；关闭停止采集，保留已采日志）","logs",()->Diagnostics.enabled(getSharedPreferences("local",0).getBoolean("logs",false)));
+        toggle("从官方App采集首次身份（可选，默认关闭）","officialIdentity",()->{if(getSharedPreferences("local",0).getBoolean("officialIdentity",false))show("请在LSPosed额外勾选 com.edifier.edifierconnect 作用域，再强行停止并重新打开官方8.5.3 App，连接耳机并打开控制页。本模块只观察已通过CRC的D8与产品/连接参数。收到身份后，强行停止官方App释放SPP，再回本模块选耳机；仍需本模块协议验证。成功READY后可关闭采集并取消官方App作用域。");});
         button("清空已采集诊断日志",()->{Diagnostics.clear();show("已清空本机诊断日志");});
         button("授权并启动控制服务",()->{if(checkSelfPermission(Manifest.permission.BLUETOOTH_CONNECT)!=PackageManager.PERMISSION_GRANTED){requestPermissions(new String[]{Manifest.permission.BLUETOOTH_CONNECT,Manifest.permission.BLUETOOTH_SCAN,Manifest.permission.POST_NOTIFICATIONS},10);return;}try{if(!getSharedPreferences("local",0).getBoolean("enabled",false))throw new IllegalStateException("请先打开安全总开关");startForegroundService(new Intent(this,ControlService.class));}catch(RuntimeException e){show(e.getMessage());}});
         button("选择已配对耳机并连接",this::selectDevice);
@@ -59,7 +60,10 @@ public final class MainActivity extends Activity {
             BluetoothDevice d=devices.get(index);DeviceRuntime runtime=DeviceRuntime.get(this);
             var known=runtime.remembered(d.getAddress());
             if(known.isPresent()){runtime.identityStatus("VERIFIED_BINDING profile="+known.get().id()+"; display name ignored");confirmDevice(d,known.get());return;}
+            var offered=runtime.offeredByOfficial(d.getAddress());
+            if(offered.isPresent()){runtime.identityStatus("OFFICIAL_IDENTITY_CANDIDATE profile="+offered.get().id()+"; own readback required");confirmDevice(d,offered.get());return;}
             Set<String> uuids=new HashSet<>();if(d.getUuids()!=null)for(var uuid:d.getUuids())uuids.add(uuid.toString());
+            runtime.identityStatus("SDP_CACHE uuidCount="+uuids.size()+" edifierSpp="+uuids.stream().anyMatch(DeviceProfile.SPP::equalsIgnoreCase)+" recognizedProducts="+uuids.stream().map(uuid->AdvertisementIdentity.PRODUCTS.get(uuid.toLowerCase(Locale.ROOT))).filter(Objects::nonNull).distinct().toList());
             // Keep the existing legacy model route separate from BES advertisement identification.
             var legacy=DeviceProfile.match(d.getName(),uuids).filter(p->p.id().equals("w820nb"));
             if(legacy.isPresent()){runtime.identityStatus("LEGACY_NAME_AND_SDP_CANDIDATE");confirmDevice(d,legacy.get());return;}
@@ -72,7 +76,7 @@ public final class MainActivity extends Activity {
                 if(isDestroyed()||isFinishing())return;
                 runtime.identityStatus(code);
                 if(identity!=null&&identity.matched()){runtime.acceptIdentity(d.getAddress(),identity);confirmDevice(d,DeviceProfile.find(identity.profileId()).orElseThrow());}
-                else show(code+"\n未取得匹配的产品UUID、厂家数据、目标地址和协议字段，尚未建立耳机控制连接。请开启详细诊断再复现并导出；不必恢复原显示名称或重复提供官方APK。");
+                else show(code+"\n尚未建立耳机控制连接。若官方App可正常控制，可启用“从官方App采集首次身份”备用路径；否则请开启详细诊断复现并导出。不必恢复原显示名称或重复提供官方APK。");
             });
         }).show();
     }
@@ -91,7 +95,7 @@ public final class MainActivity extends Activity {
         submitReload(()->{
             try{
                 if(service.getApiVersion()<102)throw new IllegalStateException("框架服务不支持 API 102 热重载");
-                List<HookedTarget> targets=service.getRunningTargets().stream().filter(t->CallerPolicy.HOSTS.stream().anyMatch(p->t.getProcessName().equals(p)||t.getProcessName().startsWith(p+":"))).toList();
+                List<HookedTarget> targets=service.getRunningTargets().stream().filter(t->CallerPolicy.scope(t.getProcessName().split(":",2)[0])).toList();
                 postReloadUi(reference,activity->{
                     activity.reloadPending.set(false);
                     if(targets.isEmpty()){activity.show("没有已注入的运行中宿主；先打开系统耳机详情页。初次启用仍需重启宿主进程。");return;}
@@ -123,7 +127,8 @@ public final class MainActivity extends Activity {
     private String report(){
         var runtime=DeviceRuntime.get(this);var s=runtime.controller.state();StringBuilder b=new StringBuilder("EdifierXCorolos "+BuildConfig.VERSION_NAME+" code="+BuildConfig.VERSION_CODE+" source="+BuildConfig.SOURCE_REVISION+"\n"+Build.MANUFACTURER+" "+Build.MODEL+" SDK "+Build.VERSION.SDK_INT+"\n构建："+Build.DISPLAY+"\n"+ModuleApplication.frameworkStatus+"\n识别："+runtime.identityStatus+"\n服务："+runtime.running()+"；安全开关："+getSharedPreferences("local",0).getBoolean("enabled",false)+"\nProfile: "+s.profileId()+"\n状态："+s.phase()+" "+s.error()+"\n电量："+s.battery()+"\n降噪："+s.noise()+"\n");
         b.append("权限 CONNECT=").append(checkSelfPermission(Manifest.permission.BLUETOOTH_CONNECT)==PackageManager.PERMISSION_GRANTED).append(" SCAN=").append(checkSelfPermission(Manifest.permission.BLUETOOTH_SCAN)==PackageManager.PERMISSION_GRANTED).append('\n');
-        for(String pkg:List.of("com.android.settings","com.oplus.wirelesssettings","com.oplus.melody","com.heytap.mydevices","com.heytap.accessory","com.android.bluetooth"))try{var p=getPackageManager().getPackageInfo(pkg,0);b.append(pkg).append(' ').append(p.versionName).append('/').append(p.getLongVersionCode()).append('\n');}catch(PackageManager.NameNotFoundException e){b.append(pkg).append(" 未安装\n");}
+        for(String pkg:List.of("com.android.settings","com.oplus.wirelesssettings","com.oplus.melody","com.heytap.mydevices","com.heytap.accessory","com.android.bluetooth",OfficialIdentityPolicy.PACKAGE))try{var p=getPackageManager().getPackageInfo(pkg,0);b.append(pkg).append(' ').append(p.versionName).append('/').append(p.getLongVersionCode()).append('\n');}catch(PackageManager.NameNotFoundException e){b.append(pkg).append(" 未安装\n");}
+        b.append("官方身份采集：").append(getSharedPreferences("local",0).getBoolean("officialIdentity",false)).append('\n');
         b.append("热重载：").append(ModuleApplication.hotReloadStatus).append('\n');
         b.append("系统电量：实验接口，实机未验证；官方弹窗：未实现，待 ColorOS 15 宿主证据\nEQ/手势/OTA：无本型号安全命令证据，禁用\n").append(Diagnostics.summary());return b.toString();
     }
@@ -135,7 +140,7 @@ public final class MainActivity extends Activity {
         var uri=data.getData();String metadata=report();var context=getApplicationContext();WeakReference<MainActivity> reference=new WeakReference<>(this);
         submitReload(()->{try(var out=context.getContentResolver().openOutputStream(uri)){
             if(out==null)throw new java.io.IOException("No output stream");StringBuilder report=new StringBuilder(metadata).append("\n\n=== Detailed events (local, redacted) ===\n").append(Diagnostics.export());
-            var framework=ModuleApplication.framework;if(framework!=null)try{report.append("\n=== Framework running targets ===\n");for(var target:framework.getRunningTargets())if(CallerPolicy.HOSTS.stream().anyMatch(p->target.getProcessName().equals(p)||target.getProcessName().startsWith(p+":")))report.append(target.getProcessName()).append(' ').append(target.getState()).append(" loadedCode=").append(target.getLoadedVersionCode()).append('\n');}catch(RuntimeException e){report.append("TARGET_QUERY_FAILED ").append(e.getClass().getSimpleName());}
+            var framework=ModuleApplication.framework;if(framework!=null)try{report.append("\n=== Framework running targets ===\n");for(var target:framework.getRunningTargets())if(CallerPolicy.scope(target.getProcessName().split(":",2)[0]))report.append(target.getProcessName()).append(' ').append(target.getState()).append(" loadedCode=").append(target.getLoadedVersionCode()).append('\n');}catch(RuntimeException e){report.append("TARGET_QUERY_FAILED ").append(e.getClass().getSimpleName());}
             out.write(report.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8));postReloadUi(reference,a->a.show("详细诊断报告已导出"));
         }catch(java.io.IOException|RuntimeException e){Diagnostics.failure("export","EXPORT_FAILED",e);postReloadUi(reference,a->a.show("导出失败："+e.getClass().getSimpleName()));}});
     }}

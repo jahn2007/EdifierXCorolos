@@ -10,13 +10,14 @@
         <package android:name="com.android.settings" /><package android:name="com.oplus.wirelesssettings" />
         <package android:name="com.oplus.melody" /><package android:name="com.heytap.mydevices" />
         <package android:name="com.heytap.accessory" /><package android:name="com.android.bluetooth" />
+        <package android:name="com.edifier.edifierconnect" />
     </queries>
     <application android:name=".ui.ModuleApplication" android:allowBackup="false" android:label="EdifierXCorolos"
         android:description="@string/description" android:icon="@drawable/ic_headphones" android:theme="@android:style/Theme.DeviceDefault.DayNight">
         <activity android:name=".ui.MainActivity" android:exported="true">
             <intent-filter><action android:name="android.intent.action.MAIN" /><category android:name="android.intent.category.LAUNCHER" /><category android:name="de.robv.android.xposed.category.MODULE_SETTINGS" /></intent-filter>
         </activity>
-        <provider android:name=".bridge.ControlProvider" android:authorities="io.github.jahn2007.edifierx.control" android:exported="true" android:grantUriPermissions="false" />
+        <provider android:name=".bridge.ControlProvider" android:authorities="io.github.jahn2007.edifierx.control" android:exported="true" android:grantUriPermissions="true" />
         <service android:name=".device.ControlService" android:exported="false" android:foregroundServiceType="connectedDevice" />
     </application>
 </manifest>

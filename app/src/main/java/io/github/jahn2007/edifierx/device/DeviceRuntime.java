@@ -30,6 +30,21 @@ public final class DeviceRuntime {
         discoveries.put(address,new Proof(result.profileId(),SystemClock.elapsedRealtime()+120000));
     }
     public synchronized Optional<DeviceProfile> remembered(String address){return DeviceProfile.find(prefs.getString("verified."+address,""));}
+    public synchronized Optional<DeviceProfile> offeredByOfficial(String address){
+        long time=prefs.getLong("officialTime."+address,0),now=System.currentTimeMillis();
+        if(time<=0||now<time||now-time>600000)return Optional.empty();
+        return DeviceProfile.find(prefs.getString("officialCandidate."+address,""));
+    }
+    public synchronized boolean offerOfficial(String address,String productUuid,int version,int encryption){
+        if(!BluetoothAdapter.checkBluetoothAddress(address))return false;
+        var profile=OfficialIdentityPolicy.profile(productUuid,version,encryption);if(profile.isEmpty())return false;
+        BluetoothAdapter adapter=context.getSystemService(BluetoothManager.class).getAdapter();
+        if(adapter==null||adapter.getRemoteDevice(address).getBondState()!=BluetoothDevice.BOND_BONDED)return false;
+        var edit=prefs.edit();var keys=prefs.getAll().keySet().stream().filter(k->k.startsWith("officialCandidate.")).sorted().toList();
+        if(keys.size()>=16&&!prefs.contains("officialCandidate."+address)){String oldest=keys.get(0);edit.remove(oldest).remove("officialTime."+oldest.substring("officialCandidate.".length()));}
+        edit.putString("officialCandidate."+address,profile.get().id()).putLong("officialTime."+address,System.currentTimeMillis()).apply();
+        identityStatus("OFFICIAL_IDENTITY_OFFERED profile="+profile.get().id()+"; expires in 10 minutes; module protocol verification still required");return true;
+    }
     public void identityStatus(String status){identityStatus=Diagnostics.clean(status);Diagnostics.event("identity",status);}
     private final BroadcastReceiver receiver=new BroadcastReceiver(){public void onReceive(Context c,Intent intent){
         if(BluetoothAdapter.ACTION_STATE_CHANGED.equals(intent.getAction())){if(intent.getIntExtra(BluetoothAdapter.EXTRA_STATE,0)!=BluetoothAdapter.STATE_ON){reconnectEpoch++;controller.disconnect();}return;}
@@ -61,10 +76,11 @@ public final class DeviceRuntime {
         Proof proof=discoveries.get(address);
         boolean advertised=proof!=null&&proof.profile().equals(profileId)&&proof.expires()>=SystemClock.elapsedRealtime();
         boolean trusted=profileId.equals(stored);
+        boolean imported=offeredByOfficial(address).map(p->p.id().equals(profileId)).orElse(false);
         // Legacy W820NB retains its separately documented name + SDP route. Never borrow it for Evo.
         boolean legacy=profileId.equals("w820nb")&&profile.candidate(device.getName(),uuids);
-        if(!trusted&&!advertised&&!legacy)throw new IllegalArgumentException("IDENTITY_EVIDENCE_REQUIRED: 请重新识别广播产品与地址");
-        identityStatus("CONNECT_GATE source="+(trusted?"verified-binding":advertised?"product-uuid+manufacturer+address+protocol":"legacy-name+sdp")+" profile="+profileId+" cachedUuidCount="+uuids.size());
+        if(!trusted&&!advertised&&!legacy&&!imported)throw new IllegalArgumentException("IDENTITY_EVIDENCE_REQUIRED: 请重新识别广播产品与地址");
+        identityStatus("CONNECT_GATE source="+(trusted?"verified-binding":advertised?"product-uuid+manufacturer+address+protocol":imported?"official-d8+uid+certificate":"legacy-name+sdp")+" profile="+profileId+" cachedUuidCount="+uuids.size());
         selectedAddress=address;selectedProfile=profileId;
         controller.connect(address,profile,new RfcommTransport(device,UUID.fromString(DeviceProfile.SPP)));
     }

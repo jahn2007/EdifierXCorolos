@@ -17,6 +17,7 @@ public final class ModuleEntry extends XposedModule {
     private volatile boolean quiescing;
     private HostInstaller host;
     private SystemBatteryInstaller battery;
+    private io.github.jahn2007.edifierx.hooks.official.OfficialIdentityInstaller official;
     private HookGeneration<XposedInterface.HookHandle> handles=registry(List.of());
     private HookGeneration<XposedInterface.HookHandle> registry(List<XposedInterface.HookHandle> previous){
         return new HookGeneration<>(previous,new HookGeneration.Operations<>(){
@@ -30,13 +31,15 @@ public final class ModuleEntry extends XposedModule {
     }
     @Override public void onPackageReady(PackageReadyParam param){
         String pkg=param.getPackageName();
-        if(hostPackage!=null||!ColorOs15Compat.platform()||!param.isFirstPackage()||!CallerPolicy.HOSTS.contains(pkg))return;
+        if(hostPackage!=null||!ColorOs15Compat.platform()||!param.isFirstPackage()||!CallerPolicy.scope(pkg))return;
         hostPackage=pkg;
         try{install(param.getClassLoader(),null);}
         catch(Throwable t){cleanup();try{handles.rollback();}catch(RuntimeException e){report("HOST_UNHOOK_FAILED_RESTART_REQUIRED");}report("HOST_UNSUPPORTED "+t.getClass().getSimpleName());}
     }
     private void install(ClassLoader loader,Application application)throws ReflectiveOperationException{
-        if(hostPackage.equals("com.android.bluetooth")){
+        if(hostPackage.equals(io.github.jahn2007.edifierx.core.OfficialIdentityPolicy.PACKAGE)){
+            official=new io.github.jahn2007.edifierx.hooks.official.OfficialIdentityInstaller(this,this::bind);official.install(loader);
+        }else if(hostPackage.equals("com.android.bluetooth")){
             battery=new SystemBatteryInstaller(this,this::bind);battery.install(loader,application);
         }else{
             host=new HostInstaller(this,this::bind);host.install(loader);
@@ -49,7 +52,7 @@ public final class ModuleEntry extends XposedModule {
     }
     @Override public boolean onHotReloading(HotReloadingParam param){
         Application app=application();
-        if(hostPackage==null||app==null||!hostPackage.equals(app.getPackageName())||!CallerPolicy.HOSTS.contains(hostPackage))return false;
+        if(hostPackage==null||app==null||!hostPackage.equals(app.getPackageName())||!CallerPolicy.scope(hostPackage))return false;
         Bundle state=new Bundle();state.putInt("schema",1);state.putString("package",hostPackage);state.putInt("generation",generation+1);
         try{param.setSavedInstanceState(state);}catch(RuntimeException e){report("HOT_RELOAD_SAVE_FAILED");return false;}
         boolean stopped=cleanup();
@@ -61,7 +64,7 @@ public final class ModuleEntry extends XposedModule {
         try{
             if(!(param.getSavedInstanceState() instanceof Bundle state)||state.getInt("schema")!=1||app==null)throw new IllegalStateException("Reload state/application unavailable");
             hostPackage=state.getString("package");generation=state.getInt("generation",1);
-            if(!ColorOs15Compat.platform()||!CallerPolicy.HOSTS.contains(hostPackage)||!app.getPackageName().equals(hostPackage))throw new IllegalStateException("Reload host mismatch");
+            if(!ColorOs15Compat.platform()||!CallerPolicy.scope(hostPackage)||!app.getPackageName().equals(hostPackage))throw new IllegalStateException("Reload host mismatch");
             install(app.getClassLoader(),app);handles.finish();
             report("HOT_RELOAD_SUCCEEDED generation="+generation);
         }catch(Throwable failure){
@@ -74,6 +77,7 @@ public final class ModuleEntry extends XposedModule {
         quiescing=true;boolean stopped=true;
         try{if(host!=null)stopped=host.stopAndAwait()&stopped;}catch(RuntimeException e){stopped=false;}
         try{if(battery!=null)stopped=battery.stopAndAwait()&stopped;}catch(RuntimeException e){stopped=false;}
+        try{if(official!=null)stopped=official.stopAndAwait()&stopped;}catch(RuntimeException e){stopped=false;}
         return stopped;
     }
     private void report(String code){try{log(android.util.Log.INFO,"EdifierX",code);}catch(Throwable ignored){}}

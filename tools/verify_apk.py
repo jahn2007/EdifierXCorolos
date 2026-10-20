@@ -26,7 +26,7 @@ def verify(apk):
         assert props['autoHotReload']=='true'
         assert len(z.read(root+'java_init.list').decode().splitlines())==1
         scopes=set(z.read(root+'scope.list').decode().split())
-        assert scopes=={'com.android.settings','com.oplus.wirelesssettings','com.oplus.melody','com.heytap.mydevices','com.android.bluetooth'}
+        assert scopes=={'com.android.settings','com.oplus.wirelesssettings','com.oplus.melody','com.heytap.mydevices','com.android.bluetooth','com.edifier.edifierconnect'}
         assert 'assets/xposed_init' not in z.namelist()
         classes={}
         for name in z.namelist():
@@ -41,6 +41,6 @@ if __name__=='__main__':
     parser=argparse.ArgumentParser();parser.add_argument('apk',type=pathlib.Path);parser.add_argument('--aapt',required=True);args=parser.parse_args()
     badging=subprocess.check_output([args.aapt,'dump','badging',str(args.apk)],text=True)
     assert "package: name='io.github.jahn2007.edifierx'" in badging
-    assert "versionName='0.2.1'" in badging
+    assert "versionName='0.2.2'" in badging
     assert "sdkVersion:'35'" in badging
     print(json.dumps(verify(args.apk),indent=2))

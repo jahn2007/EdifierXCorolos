@@ -13,8 +13,10 @@
 
 ColorOs15Compat 集中管理平台门禁、受控类加载、Preference 锚点和设备参数。存在类不等于语义兼容，后续版本适配必须增加实机记录和方法签名证据。无广域 Dex 扫描、ClassLoader.loadClass Hook 或所有方法遍历。
 
-宿主不匹配时保留 ColorOS 原行为。若没有注入，按 HOST / IPC / PROFILE / TRANSPORT 分类定位；不将“找不到宿主类”报告为协议错误。所有作用域逐包隔离；不 Hook android、system_server、SystemUI、厂商控制 App。
+宿主不匹配时保留 ColorOS 原行为。若没有注入，按 HOST / IPC / PROFILE / TRANSPORT 分类定位；不将“找不到宿主类”报告为协议错误。所有作用域逐包隔离；不 Hook android、system_server或SystemUI。0.2.2仅在独立功能开启和作用域选择后，可对官方8.5.3 App安装被动D8身份观察，不安装系统UI Hook或修改其连接行为。
 
 产品图片目前使用项目自制通用耳机图标，不含官方 Evo Pro 图片；准确产品图需合法素材来源后另行适配。
 
 0.2.1增加宿主诊断异步转发，可在模块导出看到实际Fragment类、Preference锚点/参数缺失和等待协议门禁等不同原因。Provider不可达时LSPosed副本仍是必要证据，不能据此声称已修正ColorOS15实际类定位。
+
+已收到PHK110_15.0.0.830(CN01)实机诊断：上述宿主版本详见ZERO_ADVERTISEMENT，框架加载已报告，但没有页面注入/协议控制PASS。0.2.2 APK建议作用域新增com.edifier.edifierconnect，仅用于可选首次身份采集，关闭后可取消。

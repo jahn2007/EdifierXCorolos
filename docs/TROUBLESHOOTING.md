@@ -24,3 +24,7 @@
 ## 改名与识别失败
 
 Evo Pro首次识别现使用产品广播UUID、厂家数据和所选经典地址关联，支持首次识别前改名；不再仅凭名称+UUID缓存阻断。IDENTITY_SCAN_TIMEOUT查看扫描收到的样本和拒绝计数，IDENTITY_SCAN_PERMISSION_REQUIRED检查附近设备扫描授权。还没通过身份门禁时页面可能隐藏控件，不能据此认定Hook未命中。[详细操作和边界](RENAME_AND_LOGS.md)。
+
+## IDENTITY_SCAN_TIMEOUT reports=0
+
+零匹配报告不证明耳机协议或宿主失败。0.2.2在详细模式增加6秒有限观察，区分硬件筛选回调与软件观察；不收集其他设备标识。系统已连接且官方App可控制时，可按[官方身份备用流程](ZERO_ADVERTISEMENT.md)首次获取产品和协议候选；要关闭官方App释放SPP，再让模块自行握手。

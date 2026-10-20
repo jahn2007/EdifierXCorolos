@@ -4,7 +4,7 @@
 
 为 OnePlus Ace 2 / PHK110、ColorOS 15 / Android 15 开发的 Modern libxposed API 102 模块。**优先适配花再 Evo Pro**。目标是系统蓝牙详情页内的真实耳机控制，不以普通 App 页面代替原生控制。
 
-当前为 **0.2.1 开发版本**。源码中的系统集成和协议实现不等于 PHK110 实测成功；构建结果、协议证据、宿主兼容与实机验收分别记录在 [STATUS](docs/STATUS.md)。尚无本项目实机验证型号，勿称最终稳定版。
+当前为 **0.2.2 开发版本**。源码中的系统集成和协议实现不等于 PHK110 实测成功；构建结果、协议证据、宿主兼容与实机验收分别记录在 [STATUS](docs/STATUS.md)。尚无本项目实机验证型号，勿称最终稳定版。
 
 官方8.5.3 APK现已通过十个分卷完整校验并完成静态分析，定位Evo Pro产品ID290及SPP配置，详见[分析报告](docs/OFFICIAL_APK_ANALYSIS.md)。内置345条产品记录仅作研究目录，不等于全部适配。
 
@@ -44,3 +44,5 @@ Evo Pro 游戏模式、EQ、手势、入耳检测、官方连接/开盖弹窗、
 [架构](docs/ARCHITECTURE.md) · [协议](docs/PROTOCOL_ANALYSIS.md) · [ColorOS 15](docs/COLOROS15_COMPAT.md) · [测试](docs/TESTING.md) · [来源](docs/REFERENCES.md)
 
 0.2.1详细诊断默认关闭；开启后采集识别、协议和宿主阶段，保存在本机有界轮转日志中。关闭后仍可导出，手工清空才删除。日志说明和本轮验证见[STATUS](docs/STATUS.md)。上方链接为Actions39434063178验证通过的0.2.1 build13。
+
+0.2.2新增默认关闭的官方8.5.3首次身份采集，用于已改名、系统已连接且模块收不到广播的设备；需额外选择官方App作用域并在模块开启此项。[完整操作步骤](docs/ZERO_ADVERTISEMENT.md)。正式签名仍关闭，新版下载将在本轮CI验证后更新。

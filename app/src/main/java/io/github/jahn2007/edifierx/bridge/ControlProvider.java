@@ -16,7 +16,21 @@ public final class ControlProvider extends ContentProvider {
         if(now-bucket[0]>=10000){bucket[0]=now;bucket[1]=0;}return bucket[1]++<32;}
     @Override public boolean onCreate(){return true;}
     @Override public Bundle call(String method,String arg,Bundle extras){
-        Context context=providerContext();CallerPolicy.enforce(context,Binder.getCallingUid());
+        Context context=providerContext();
+        if("official_identity".equals(method)||"official_diagnostic".equals(method)){
+            CallerPolicy.enforceOfficial(context,Binder.getCallingUid());
+            var prefs=context.getSharedPreferences("local",0);Bundle reply=new Bundle();
+            if(!prefs.getBoolean("enabled",false)||!prefs.getBoolean("officialIdentity",false)||extras==null||!allowLog(Binder.getCallingUid()))return reply;
+            if("official_identity".equals(method)){
+                int length=extras.getInt("d8Length",0);
+                if(!"VERIFIED_D8".equals(extras.getString("source"))||length<3||length>250)return reply;
+                boolean accepted=DeviceRuntime.get(context).offerOfficial(extras.getString("address",""),extras.getString("productUuid",""),extras.getInt("version",-1),extras.getInt("encryption",-1));
+                reply.putBoolean("accepted",accepted);Diagnostics.event("official","OFFICIAL_ENROLLMENT accepted="+accepted+" d8Length="+length);
+            }else{
+                String code=extras.getString("code","");if(code.matches("OFFICIAL_[A-Z0-9_]{1,54}"))Diagnostics.event("official",code+" "+Diagnostics.clean(extras.getString("detail","")));
+            }return reply;
+        }
+        CallerPolicy.enforce(context,Binder.getCallingUid());
         if("diagnostic".equals(method)){
             if(Diagnostics.enabled()&&extras!=null&&allowLog(Binder.getCallingUid())){
                 String code=extras.getString("code","");if(!code.matches("[A-Z][A-Z0-9_]{0,63}"))throw new IllegalArgumentException("diagnostic code required");

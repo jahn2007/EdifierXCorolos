@@ -9,8 +9,8 @@ commit=os.environ['GITHUB_SHA']
 run_id=os.environ['GITHUB_RUN_ID']
 assert re.fullmatch(r'[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+',repo)
 assert number.isdigit() and run_id.isdigit() and re.fullmatch(r'[a-f0-9]{40}',commit)
-assert apk.name=='EdifierXCorolos-v0.2.1-debug.apk' and apk.is_file()
-tag=f'debug-v0.2.1-build{number}'
+assert apk.name=='EdifierXCorolos-v0.2.2-debug.apk' and apk.is_file()
+tag=f'debug-v0.2.2-build{number}'
 digest=hashlib.sha256(apk.read_bytes()).hexdigest()
 endpoint=f'repos/{repo}/releases/tags/{tag}'
 
@@ -39,7 +39,7 @@ SHA-256：`{digest}`。
 
 源码提交：`{commit}`。完整源码和许可证可通过本 Release 的源代码附件获取。
 ''')
-        print(gh('release','create',tag,str(apk),str(checksum),'--repo',repo,'--target',commit,'--title',f'EdifierXCorolos v0.2.1 Debug — Build {number}','--notes-file',str(notes),'--prerelease').strip())
+        print(gh('release','create',tag,str(apk),str(checksum),'--repo',repo,'--target',commit,'--title',f'EdifierXCorolos v0.2.2 Debug — Build {number}','--notes-file',str(notes),'--prerelease').strip())
     release=json.loads(gh('api',endpoint))
 else:
     raise SystemExit('Cannot inspect release state; publication stopped: '+existing.stderr)

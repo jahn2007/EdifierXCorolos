@@ -8,8 +8,8 @@ android {
         applicationId = "io.github.jahn2007.edifierx"
         minSdk = 35
         targetSdk = 35
-        versionCode = 3
-        versionName = "0.2.1"
+        versionCode = 4
+        versionName = "0.2.2"
         buildConfigField("String", "SOURCE_REVISION", "\"${System.getenv("GITHUB_SHA") ?: "unknown"}\"")
     }
     buildTypes {

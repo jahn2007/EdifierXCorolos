@@ -14,6 +14,10 @@ public final class AdvertisementIdentity {
     public enum Status { MATCHED, UNKNOWN_PRODUCT, AMBIGUOUS_PRODUCT, WRONG_MANUFACTURER,
         TRUNCATED_DATA, ADDRESS_MISMATCH, UNSUPPORTED_PROTOCOL }
     public record Result(Status status,String profileId) { public boolean matched(){return status==Status.MATCHED;} }
+    public static boolean targetAddress(String selectedAddress,byte[] data){
+        String address=selectedAddress==null?"":selectedAddress.replace(":","").toLowerCase(Locale.ROOT);
+        return data!=null&&data.length>=6&&address.matches("[0-9a-f]{12}")&&HexFormat.of().formatHex(data,0,6).equals(address);
+    }
     public static Result identify(String selectedAddress,Collection<String> services,int manufacturer,byte[] data){
         Set<String> models=new HashSet<>();
         for(String service:services){String id=PRODUCTS.get(service.toLowerCase(Locale.ROOT));if(id!=null)models.add(id);}
@@ -22,8 +26,7 @@ public final class AdvertisementIdentity {
         String id=models.iterator().next();
         if(manufacturer!=MANUFACTURER)return new Result(Status.WRONG_MANUFACTURER,id);
         if(data==null||data.length<8)return new Result(Status.TRUNCATED_DATA,id);
-        String address=selectedAddress==null?"":selectedAddress.replace(":","").toLowerCase(Locale.ROOT);
-        if(!address.matches("[0-9a-f]{12}")||!HexFormat.of().formatHex(data,0,6).equals(address))return new Result(Status.ADDRESS_MISMATCH,id);
+        if(!targetAddress(selectedAddress,data))return new Result(Status.ADDRESS_MISMATCH,id);
         DeviceProfile profile=DeviceProfile.find(id).orElseThrow();
         // Selector 0x31 has another protocol path in the official app. Never treat it as plaintext.
         int encryption=profile.xor()?0x10:0;
