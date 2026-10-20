@@ -13,12 +13,14 @@ import java.util.*;
 public final class HostInstaller {
     private final XposedModule module;
     private final HookSites hooks;
+    private final io.github.jahn2007.edifierx.diagnostics.HostDiagnostics diagnostics;
     private final Map<Object,NativePreferencePanel> panels=new IdentityHashMap<>();
     private final Set<NativePreferencePanel> retired=Collections.newSetFromMap(new IdentityHashMap<>());
     private volatile boolean stopping;
-    public HostInstaller(XposedModule module,HookSites hooks){this.module=module;this.hooks=hooks;}
+    public HostInstaller(XposedModule module,HookSites hooks){this.module=module;this.hooks=hooks;this.diagnostics=new io.github.jahn2007.edifierx.diagnostics.HostDiagnostics(module);}
     private boolean enabled(){try{return !stopping&&module.getRemotePreferences("config").getBoolean("enabled",false);}catch(Throwable t){return false;}}
-    private void diagnostic(String code){if(stopping)return;try{if(module.getRemotePreferences("config").getBoolean("logs",false))module.log(android.util.Log.INFO,"EdifierX",code);}catch(Throwable ignored){}}
+    private void diagnostic(String code){if(!stopping)diagnostics.event(code,"");}
+    private void diagnostic(String code,String detail){if(!stopping)diagnostics.event(code,detail);}
     public void install(ClassLoader loader)throws ReflectiveOperationException{
         Class<?> fragment=ColorOs15Compat.find(loader,"androidx.fragment.app.Fragment");
         if(fragment==null){diagnostic("HOST_ANDROIDX_FRAGMENT_ABSENT");return;}
@@ -30,23 +32,28 @@ public final class HostInstaller {
                 Object owner=chain.getThisObject();
                 if("onResume".equals(lifecycle)){if(enabled())attach(owner);}
                 else {var panel=panels.remove(owner);if(panel!=null){panel.close();retired.add(panel);}prune();}
-            }catch(Throwable t){diagnostic("HOST_LIFECYCLE_SIGNATURE_MISMATCH");}return result;});
+            }catch(Throwable t){diagnostic("HOST_LIFECYCLE_SIGNATURE_MISMATCH",t.getClass().getSimpleName()+" "+t.getMessage());}return result;});
         }
+        diagnostic("HOST_LIFECYCLE_HOOKS_INSTALLED");
     }
     private void prune(){retired.removeIf(panel->{if(!panel.isStopped())return false;panel.close();return true;});}
     private void attach(Object fragment)throws ReflectiveOperationException{
         if(stopping||panels.containsKey(fragment))return;
         prune();if(panels.size()+retired.size()>=8){diagnostic("HOST_PANEL_WORKER_LIMIT");return;}
         Object screen;
-        try{screen=ColorOs15Compat.call(fragment,"getPreferenceScreen");}catch(NoSuchMethodException e){return;}
-        if(screen==null||!ColorOs15Compat.anchor(screen))return;
+        try{screen=ColorOs15Compat.call(fragment,"getPreferenceScreen");}catch(NoSuchMethodException e){diagnostic("HOST_NO_PREFERENCE_SCREEN",fragment.getClass().getName());return;}
+        Context context=(Context)ColorOs15Compat.call(fragment,"getContext");diagnostics.context(context);
+        diagnostic("HOST_PREFERENCE_FRAGMENT",fragment.getClass().getName());
+        if(screen==null){diagnostic("HOST_PREFERENCE_SCREEN_NULL");return;}
+        if(!ColorOs15Compat.anchor(screen)){diagnostic("HOST_ANCHOR_NOT_FOUND",screen.getClass().getName());return;}
         Bundle args=(Bundle)ColorOs15Compat.call(fragment,"getArguments");String address=ColorOs15Compat.address(args);
         if(address.isEmpty()){
             Object activity=ColorOs15Compat.call(fragment,"getActivity");
             if(activity instanceof Activity a)address=ColorOs15Compat.address(a.getIntent().getExtras());
         }
-        if(address.isEmpty()){diagnostic("HOST_DEVICE_ADDRESS_NOT_FOUND");return;}
-        Context context=(Context)ColorOs15Compat.call(fragment,"getContext");if(context==null)return;
+        if(address.isEmpty()){diagnostic("HOST_DEVICE_ADDRESS_NOT_FOUND",args==null?"no arguments":"argument keys="+args.keySet());return;}
+        if(context==null)return;
+        diagnostic("HOST_PANEL_CREATED",fragment.getClass().getName()+"; exact address obtained");
         panels.put(fragment,new NativePreferencePanel(context,screen,address,this::enabled,this::diagnostic));
     }
     /** Restore already-visible screens: package/fragment lifecycle callbacks are not replayed.
@@ -83,6 +90,6 @@ public final class HostInstaller {
         boolean stopped=true;for(var panel:closing)stopped=panel.awaitStopped()&stopped;
         // A final main-thread barrier removes posts made just before worker termination.
         boolean ui=MainThread.runAndWait(()->{for(var panel:closing)panel.close();prune();});
-        return stopped&&ui&&closing.stream().allMatch(NativePreferencePanel::isStopped);
+        boolean logs=diagnostics.stopAndAwait();return stopped&&ui&&logs&&closing.stream().allMatch(NativePreferencePanel::isStopped);
     }
 }

@@ -50,7 +50,7 @@ Evo Pro 的对应记录：
 
 BLE 扫描既用于身份/协议发现，也可能用于其他设备的控制；不能因为官方调用 BluetoothGatt 就把 Evo 改成 BLE。特别是旧公开参考的 `48093801-...` **不是本次 Evo 配置里的 `48091e01-...`**。当前模块仍不为 Evo 开启 GATT 控制。
 
-`BLEManager.checkAndConnectDevice` / `checkAndConnectTargetDevice` 使用 Manufacturer ID **2016 (0x07E0)**；该厂家数据前六字节关联经典地址，末两字节分别指定协议版本和 encryption selector。`EncryptionCode.Encryption10` 的 selector=0x10，payload XOR 值=0xA5。这是家族通用规则，尚无本用户 Evo 广播样本，不能声称已核验其实际广播或 address type。当前模块仍以已配对设备、明确型号候选和只读响应验证为门禁，尚未集成这套扫描身份路径。
+`BLEManager.checkAndConnectDevice` / `checkAndConnectTargetDevice` 使用 Manufacturer ID **2016 (0x07E0)**；该厂家数据前六字节关联经典地址，末两字节分别指定协议版本和 encryption selector。`EncryptionCode.Encryption10` 的 selector=0x10，payload XOR 值=0xA5。这是家族通用规则，尚无本用户 Evo 广播样本，不能声称已核验其实际广播或 address type。0.2.1已独立实现限定型号的定向扫描身份路径，要求产品UUID、厂家ID2016、完整目标地址、version2和对应selector共同匹配，随后必须通过只读协议响应验证；详见[改名识别](RENAME_AND_LOGS.md)。
 
 ## 命令层交叉核对
 

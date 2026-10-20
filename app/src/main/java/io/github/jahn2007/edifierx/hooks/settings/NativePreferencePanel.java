@@ -23,15 +23,17 @@ public final class NativePreferencePanel implements AutoCloseable {
     private volatile boolean detached=true;
     private long generation;
     private volatile boolean enabled;
+    private String lastGate="";
     private final java.util.function.BooleanSupplier safety;
-    private final java.util.function.Consumer<String> failure;
-    public NativePreferencePanel(Context context,Object screen,String address,java.util.function.BooleanSupplier safety,java.util.function.Consumer<String> failure){this.context=context;this.screen=screen;this.address=address;this.safety=safety;this.failure=failure;worker.scheduleWithFixedDelay(this::fetch,0,2,TimeUnit.SECONDS);}
+    private final java.util.function.BiConsumer<String,String> failure;
+    public NativePreferencePanel(Context context,Object screen,String address,java.util.function.BooleanSupplier safety,java.util.function.BiConsumer<String,String> failure){this.context=context;this.screen=screen;this.address=address;this.safety=safety;this.failure=failure;worker.scheduleWithFixedDelay(this::fetch,0,2,TimeUnit.SECONDS);}
     private void fetch(){
         if(closed)return;
         try {if(!safety.getAsBoolean()){main.post(this::close);return;}
             Bundle b=context.getContentResolver().call(ControlProvider.URI,"snapshot",address,null);
-            if(b!=null&&!closed)main.post(()->{if(closed)return;try{render(b);}catch(Throwable t){failure.accept("PREFERENCE_SIGNATURE_MISMATCH");close();}});
-        }catch(Throwable t){if(!closed){failure.accept("IPC_UNAVAILABLE");main.post(this::close);}}
+            if(b==null)failure.accept("HOST_SNAPSHOT_NULL","");
+            if(b!=null&&!closed)main.post(()->{if(closed)return;try{render(b);}catch(Throwable t){failure.accept("PREFERENCE_SIGNATURE_MISMATCH",errorDetail(t));close();}});
+        }catch(Throwable t){if(!closed){failure.accept("IPC_UNAVAILABLE",errorDetail(t));main.post(this::close);}}
     }
     private Object create(String simple)throws ReflectiveOperationException{
         ClassLoader loader=screen.getClass().getClassLoader();
@@ -42,7 +44,9 @@ public final class NativePreferencePanel implements AutoCloseable {
     private void set(Object object,String name,Class<?> type,Object value)throws ReflectiveOperationException{ColorOs15Compat.call(object,name,new Class<?>[]{type},value);}
     private void add(Object parent,Object child)throws ReflectiveOperationException{ColorOs15Compat.call(parent,"addPreference",new Class<?>[]{preferenceType},child);}
     private void render(Bundle b)throws ReflectiveOperationException{
-        if(!address.equals(b.getString("address"))||!b.getBoolean("identified")||!b.getBoolean("enabled")||!b.getBoolean("service")){if(category!=null)remove();return;}
+        String gate=!address.equals(b.getString("address"))?"HOST_WAITING_SELECTED_DEVICE":!b.getBoolean("enabled")?"HOST_CONTROL_DISABLED":!b.getBoolean("service")?"HOST_WAITING_SERVICE":!b.getBoolean("identified")?"HOST_WAITING_PROTOCOL_IDENTITY":"HOST_IDENTITY_GATE_PASSED";
+        if(!gate.equals(lastGate)){lastGate=gate;failure.accept(gate,"phase="+b.getString("phase","")+" profile="+b.getString("profile","")+" error="+b.getString("error",""));}
+        if(!gate.equals("HOST_IDENTITY_GATE_PASSED")){if(category!=null)remove();return;}
         var profile=DeviceProfile.find(b.getString("profile","")).orElse(null);if(profile==null)return;
         generation=b.getLong("generation");enabled="READY".equals(b.getString("phase"));
         if(category==null){
@@ -71,10 +75,11 @@ public final class NativePreferencePanel implements AutoCloseable {
     }
     private void command(String method,String key,Object value){
         if(closed||!enabled)return;enabled=false;long token=generation;
-        try{worker.execute(()->{if(closed)return;try{Bundle args=new Bundle();args.putLong("generation",token);if(value instanceof Boolean on)args.putBoolean(key,on);else args.putString(key,String.valueOf(value));context.getContentResolver().call(ControlProvider.URI,method,address,args);}catch(Throwable t){if(!closed)failure.accept("CONTROL_IPC_FAILED");}});}catch(RejectedExecutionException ignored){}
+        try{worker.execute(()->{if(closed)return;try{Bundle args=new Bundle();args.putLong("generation",token);if(value instanceof Boolean on)args.putBoolean(key,on);else args.putString(key,String.valueOf(value));context.getContentResolver().call(ControlProvider.URI,method,address,args);}catch(Throwable t){if(!closed)failure.accept("CONTROL_IPC_FAILED",errorDetail(t));}});}catch(RejectedExecutionException ignored){}
     }
     private static String percent(int p){return p<0?"未知":p+"%";}
     private static String label(String key){return switch(key){case "ANC"->"主动降噪";case "WIND"->"抗风噪";case "AMBIENT"->"通透";case "OFF"->"关闭";case "COMFORT"->"舒适降噪";case "LIGHT"->"轻度降噪";default->"未知";};}
+    private static String errorDetail(Throwable error){StringBuilder b=new StringBuilder();for(int i=0;error!=null&&i<3;i++,error=error.getCause()){b.append(error.getClass().getSimpleName()).append(':').append(error.getMessage()).append("; ");for(var frame:java.util.Arrays.stream(error.getStackTrace()).limit(4).toList())b.append(frame).append(" <- ");}return b.toString();}
     private void clearListener(Object preference)throws ReflectiveOperationException{
         if(preference==null)return;
         Class<?> listener=Class.forName("androidx.preference.Preference$OnPreferenceChangeListener",false,preference.getClass().getClassLoader());
@@ -82,7 +87,7 @@ public final class NativePreferencePanel implements AutoCloseable {
     }
     private void remove(){
         try{clearListener(noise);clearListener(game);ColorOs15Compat.call(screen,"removePreference",new Class<?>[]{preferenceType},category);category=null;summary=null;noise=null;game=null;detached=true;}
-        catch(ReflectiveOperationException|RuntimeException e){detached=false;if(!closed)failure.accept("UI_DETACH_FAILED");}
+        catch(ReflectiveOperationException|RuntimeException e){detached=false;if(!closed)failure.accept("UI_DETACH_FAILED",errorDetail(e));}
     }
     public boolean isStopped(){return worker.isTerminated()&&detached;}
     public boolean awaitStopped(){return MainThread.awaitStopped(worker);}

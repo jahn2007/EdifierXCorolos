@@ -5,13 +5,26 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.*;
 import io.github.jahn2007.edifierx.device.DeviceRuntime;
+import io.github.jahn2007.edifierx.diagnostics.Diagnostics;
 
 /** Typed primitives over Binder-backed ContentProvider.call; no broadcasts or arbitrary byte API. */
 public final class ControlProvider extends ContentProvider {
     public static final Uri URI=Uri.parse("content://io.github.jahn2007.edifierx.control/state");
+    private final java.util.Map<Integer,long[]> logRates=new java.util.HashMap<>();
+    private synchronized boolean allowLog(int uid){long now=SystemClock.elapsedRealtime();long[] bucket=logRates.get(uid);
+        if(bucket==null){if(logRates.size()>=16)return false;bucket=new long[]{now,0};logRates.put(uid,bucket);}
+        if(now-bucket[0]>=10000){bucket[0]=now;bucket[1]=0;}return bucket[1]++<32;}
     @Override public boolean onCreate(){return true;}
     @Override public Bundle call(String method,String arg,Bundle extras){
         Context context=providerContext();CallerPolicy.enforce(context,Binder.getCallingUid());
+        if("diagnostic".equals(method)){
+            if(Diagnostics.enabled()&&extras!=null&&allowLog(Binder.getCallingUid())){
+                String code=extras.getString("code","");if(!code.matches("[A-Z][A-Z0-9_]{0,63}"))throw new IllegalArgumentException("diagnostic code required");
+                String[] packages=context.getPackageManager().getPackagesForUid(Binder.getCallingUid());
+                String host=packages==null?"unknown":java.util.Arrays.stream(packages).filter(CallerPolicy.HOSTS::contains).sorted().findFirst().orElse("module");
+                Diagnostics.event("host:"+host,code+" "+Diagnostics.clean(extras.getString("detail","")));
+            }return Bundle.EMPTY;
+        }
         DeviceRuntime runtime=DeviceRuntime.get(context);String address=arg==null?"":arg;
         if("snapshot".equals(method))return runtime.snapshot(address);
         // Only the module UI can initiate a connection or enroll an address.

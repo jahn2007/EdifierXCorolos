@@ -11,6 +11,8 @@ public final class WireCodec {
     }
     private final Dialect dialect;
     private byte[] pending = new byte[0];
+    private long badHeader,badApp,badLength,badChecksum,overflow,accepted;
+    public synchronized String diagnostics(){return "frames="+accepted+" badHeader="+badHeader+" badApp="+badApp+" badLength="+badLength+" badChecksum="+badChecksum+" overflow="+overflow+" buffered="+pending.length;}
     public WireCodec(Dialect dialect) { this.dialect = dialect; }
     public static byte[] request(Dialect dialect, int command, byte[] payload, boolean xor) {
         if (command < 0 || command > 255 || payload.length > 250) throw new IllegalArgumentException("frame bounds");
@@ -33,7 +35,7 @@ public final class WireCodec {
         if (!bes) b[b.length-2] = (byte) (sum >>> 8);
     }
     public synchronized List<Frame> offer(byte[] chunk) {
-        if (chunk.length > 4096 || pending.length + chunk.length > 8192) { pending = new byte[0]; return List.of(); }
+        if (chunk.length > 4096 || pending.length + chunk.length > 8192) { overflow++;pending = new byte[0]; return List.of(); }
         byte[] all = Arrays.copyOf(pending, pending.length+chunk.length);
         System.arraycopy(chunk,0,all,pending.length,chunk.length);
         List<Frame> out = new ArrayList<>();
@@ -41,15 +43,16 @@ public final class WireCodec {
         boolean bes = dialect == Dialect.BES;
         while (all.length-start >= (bes?6:5)) {
             int head=all[start]&255;
-            if (head!=0xBB && head!=0xCC) { start++; continue; }
-            if (bes && (all[start+1]&255)!=0xEC) { start++; continue; }
+            if (head!=0xBB && head!=0xCC) { badHeader++;start++; continue; }
+            if (bes && (all[start+1]&255)!=0xEC) { badApp++;start++; continue; }
             int size=bes ? ((all[start+3]&255)<<8 | (all[start+4]&255)) : (all[start+1]&255)-1;
-            if (size<0 || size>250) { start++; continue; }
+            if (size<0 || size>250) { badLength++;start++; continue; }
             int total=size+(bes?6:5);
             if (all.length-start<total) break;
             byte[] candidate=Arrays.copyOfRange(all,start,start+total);
             byte[] checked=candidate.clone(); checksum(checked,bes);
-            if (checked[total-1]!=candidate[total-1] || (!bes && checked[total-2]!=candidate[total-2])) { start++; continue; }
+            if (checked[total-1]!=candidate[total-1] || (!bes && checked[total-2]!=candidate[total-2])) { badChecksum++;start++; continue; }
+            accepted++;
             out.add(new Frame(candidate[2]&255,Arrays.copyOfRange(candidate,bes?5:3,total-(bes?1:2))));
             start+=total;
         }

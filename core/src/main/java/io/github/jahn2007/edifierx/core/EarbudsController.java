@@ -16,6 +16,10 @@ public final class EarbudsController implements AutoCloseable {
     private long epoch;
     private long lastWrite;
     private ScheduledFuture<?> connectionTimer;
+    private final Consumer<String> diagnostics;
+    public EarbudsController(){this(message->{});}
+    public EarbudsController(Consumer<String> diagnostics){this.diagnostics=diagnostics;}
+    private void trace(String message){try{diagnostics.accept(message);}catch(RuntimeException ignored){}}
     public DeviceState state(){return state;}
     public void addListener(Consumer<DeviceState> listener){listeners.add(listener);listener.accept(state);}
     public void removeListener(Consumer<DeviceState> listener){listeners.remove(listener);}
@@ -24,14 +28,15 @@ public final class EarbudsController implements AutoCloseable {
     public void connect(String address,DeviceProfile selected,Transport channel) {
         loop.execute(()->{
             release();long token=++epoch;profile=selected;transport=channel;
+            trace("CONNECT generation="+token+" profile="+selected.id()+" dialect="+selected.dialect()+" xor="+selected.xor());
             emit(new DeviceState(token,address,selected.id(),Phase.CONNECTING,Battery.UNKNOWN,"UNKNOWN",null,false,""));
             WireCodec decoder=new WireCodec(selected.dialect());
             commands=new CommandQueue(loop,channel,Duration.ofSeconds(5),f->{if(token==epoch)onFrame(f);},()->{if(token==epoch)failed("PROTOCOL_TIMEOUT_OR_IO");});
             connectionTimer=loop.schedule(()->{if(token==epoch)failed("CONNECT_TIMEOUT");},12,TimeUnit.SECONDS);
-            channel.connect(bytes->{if(token==state.generation())for(var f:decoder.offer(bytes))commandsFor(token,f);},e->loop.execute(()->{if(token==epoch)failed("TRANSPORT_DISCONNECTED");}))
+            channel.connect(bytes->{if(token==state.generation()){var frames=decoder.offer(bytes);trace("RX generation="+token+" bytes="+bytes.length+" "+decoder.diagnostics());for(var f:frames)commandsFor(token,f);}},e->loop.execute(()->{if(token==epoch){trace("TRANSPORT failure="+cause(e));failed("TRANSPORT_DISCONNECTED");}}))
                 .whenComplete((ok,error)->loop.execute(()->{
                     if(token!=epoch)return;connectionTimer.cancel(false);
-                    if(error!=null){failed("CONNECT_FAILED");return;}
+                    if(error!=null){trace("CONNECT failure="+cause(error));failed("CONNECT_FAILED");return;}
                     phase(Phase.READING,"");refreshOnLoop();
                 }));
         });
@@ -40,6 +45,8 @@ public final class EarbudsController implements AutoCloseable {
     private void onFrame(WireCodec.Frame frame) {
         var s=state;Battery battery=Battery.parse(profile,frame);String noise=s.noise();Boolean game=s.game();
         byte[] data=profile.decode(frame.payload());
+        trace("FRAME cmd="+Integer.toHexString(frame.command())+" payloadLength="+data.length+" batteryValid="+(battery!=null)
+            +((frame.command()==0xCC||frame.command()==0xC1)&&data.length>=2?" ancSlot="+(data[0]&255)+" ancValue="+(data[1]&255):""));
         if((frame.command()==0xCC||frame.command()==0xC1)&&!profile.readModes().isEmpty()) {
             int offset=profile.ancSlot()<0?0:1;
             if(data.length>offset&&(offset==0||(data[0]&255)==profile.ancSlot()))noise=profile.readModes().getOrDefault(data[offset]&255,noise);
@@ -53,17 +60,18 @@ public final class EarbudsController implements AutoCloseable {
     private void refreshOnLoop() {
         long token=epoch;phase(Phase.READING,"");
         CommandQueue active=commands;DeviceProfile selected=profile;
+        trace("QUERY battery="+Integer.toHexString(selected.batteryCommand()));
         CompletableFuture<?> f=active.submit(selected.batteryCommand(),selected.query(selected.batteryCommand())).thenApply(frame->{
             if(Battery.parse(selected,frame)==null)throw new CompletionException(new IllegalArgumentException("invalid battery response"));return frame;
         });
-        if(!selected.readModes().isEmpty())f=f.thenCompose(x->active.submit(0xCC,selected.query(0xCC))).thenApply(frame->{
+        if(!selected.readModes().isEmpty())f=f.thenCompose(x->{trace("QUERY ANC=cc expectedSlot="+selected.ancSlot());return active.submit(0xCC,selected.query(0xCC));}).thenApply(frame->{
             byte[] b=selected.decode(frame.payload());int offset=selected.ancSlot()<0?0:1;
             if(b.length<=offset||(offset==1&&(b[0]&255)!=selected.ancSlot())||!selected.readModes().containsKey(b[offset]&255))throw new CompletionException(new IllegalArgumentException("ANC slot mismatch"));return frame;
         });
         if(selected.game())f=f.thenCompose(x->active.submit(0x08,selected.query(0x08))).thenApply(frame->{
             byte[] b=selected.decode(frame.payload());if(b.length!=1||(b[0]&255)>1)throw new CompletionException(new IllegalArgumentException("game response mismatch"));return frame;
         });
-        f.whenComplete((ok,e)->loop.execute(()->{if(token!=epoch)return;if(e!=null)failed("READ_FAILED");else if(state.identified())phase(Phase.READY,"");else failed("PROFILE_RESPONSE_MISMATCH");}));
+        f.whenComplete((ok,e)->loop.execute(()->{if(token!=epoch)return;if(e!=null){trace("READ failure="+cause(e));failed("READ_FAILED");}else if(state.identified())phase(Phase.READY,"");else failed("PROFILE_RESPONSE_MISMATCH");}));
     }
     public CompletableFuture<Void> setNoiseMode(String expectedAddress,long expectedGeneration,String mode){return write(expectedAddress,expectedGeneration,mode,null);}
     public CompletableFuture<Void> setGameMode(String expectedAddress,long expectedGeneration,boolean enabled){return write(expectedAddress,expectedGeneration,null,enabled);}
@@ -103,7 +111,8 @@ public final class EarbudsController implements AutoCloseable {
         });return result;
     }
     private void release(){if(connectionTimer!=null)connectionTimer.cancel(false);if(commands!=null)commands.close();if(transport!=null)transport.close();commands=null;transport=null;}
-    private void failed(String reason){release();long token=++epoch;var s=state;emit(new DeviceState(token,s.address(),s.profileId(),Phase.ERROR,Battery.UNKNOWN,"UNKNOWN",null,false,reason));}
+    private static String cause(Throwable error){StringBuilder b=new StringBuilder();for(int i=0;error!=null&&i<4;i++,error=error.getCause())b.append(error.getClass().getSimpleName()).append(':').append(error.getMessage()).append("; ");return b.toString();}
+    private void failed(String reason){trace("FAILED generation="+epoch+" reason="+reason);release();long token=++epoch;var s=state;emit(new DeviceState(token,s.address(),s.profileId(),Phase.ERROR,Battery.UNKNOWN,"UNKNOWN",null,false,reason));}
     public void disconnect(){loop.execute(()->{release();emit(DeviceState.empty(++epoch));});}
     @Override public void close(){loop.execute(()->{release();emit(DeviceState.empty(++epoch));listeners.clear();loop.schedule(loop::shutdown,0,TimeUnit.MILLISECONDS);});}
 }

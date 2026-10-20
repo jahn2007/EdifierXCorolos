@@ -47,36 +47,37 @@ jobs:
           import pathlib,xml.etree.ElementTree as ET
           suites=[ET.parse(p).getroot() for p in pathlib.Path('core/build/test-results/test').glob('TEST-*.xml')]
           count=sum(int(s.attrib['tests']) for s in suites)
-          assert count>=44, f'Expected >=44 executed tests, got {count}'
+          assert count>=57, f'Expected >=57 executed tests, got {count}'
           assert sum(int(s.attrib.get('skipped',0))+int(s.attrib.get('failures',0))+int(s.attrib.get('errors',0)) for s in suites)==0
           print(f'{count} tests executed and passed')
           PYCODE
           mkdir -p artifacts
+          "$ANDROID_HOME/build-tools/37.0.0/apksigner" verify --verbose --print-certs app/build/outputs/apk/debug/app-debug.apk > artifacts/debug-signature-report.txt
           python3 tools/verify_apk.py app/build/outputs/apk/debug/app-debug.apk --aapt "$ANDROID_HOME/build-tools/37.0.0/aapt" > artifacts/debug-verification.json
           python3 tools/verify_apk.py app/build/outputs/apk/release/app-release-unsigned.apk --aapt "$ANDROID_HOME/build-tools/37.0.0/aapt" > artifacts/release-unsigned-verification.json
-          cp app/build/outputs/apk/debug/app-debug.apk artifacts/EdifierXCorolos-v0.2.0-debug.apk
-          cp app/build/outputs/apk/release/app-release-unsigned.apk artifacts/EdifierXCorolos-v0.2.0-release-unsigned.apk
+          cp app/build/outputs/apk/debug/app-debug.apk artifacts/EdifierXCorolos-v0.2.1-debug.apk
+          cp app/build/outputs/apk/release/app-release-unsigned.apk artifacts/EdifierXCorolos-v0.2.1-release-unsigned.apk
           (cd artifacts && sha256sum *.apk > SHA256SUMS.txt)
           cat artifacts/SHA256SUMS.txt >> "$GITHUB_STEP_SUMMARY"
-          python3 tools/apk_summary.py artifacts/EdifierXCorolos-v0.2.0-debug.apk
-          echo '44 or more unit tests, lint, debug and R8 release compile, APK metadata: PASS' >> "$GITHUB_STEP_SUMMARY"
+          python3 tools/apk_summary.py artifacts/EdifierXCorolos-v0.2.1-debug.apk
+          echo '57 or more unit tests, lint, debug and R8 release compile, APK metadata: PASS' >> "$GITHUB_STEP_SUMMARY"
       - name: Upload APKs
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: EdifierXCorolos-v0.2.0-build-${{ github.run_number }}
+          name: EdifierXCorolos-v0.2.1-build-${{ github.run_number }}
           path: artifacts/
           if-no-files-found: error
       - name: Upload installable Debug APK separately
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: EdifierXCorolos-v0.2.0-debug-${{ github.run_number }}
-          path: artifacts/EdifierXCorolos-v0.2.0-debug.apk
+          name: EdifierXCorolos-v0.2.1-debug-${{ github.run_number }}
+          path: artifacts/EdifierXCorolos-v0.2.1-debug.apk
           if-no-files-found: error
       - name: Upload reports even on failure
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: EdifierXCorolos-v0.2.0-reports-${{ github.run_number }}
+          name: EdifierXCorolos-v0.2.1-reports-${{ github.run_number }}
           path: |
             core/build/reports/
             core/build/test-results/
@@ -94,12 +95,12 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with:
-          name: EdifierXCorolos-v0.2.0-debug-${{ github.run_number }}
+          name: EdifierXCorolos-v0.2.1-debug-${{ github.run_number }}
           path: debug-apk
       - name: Publish clearly labeled Debug prerelease with direct APK link
         env:
           GH_TOKEN: ${{ github.token }}
-        run: python3 tools/publish_debug_release.py debug-apk/EdifierXCorolos-v0.2.0-debug.apk
+        run: python3 tools/publish_debug_release.py debug-apk/EdifierXCorolos-v0.2.1-debug.apk
   sign:
     needs: build
     if: github.event_name == 'workflow_dispatch' && inputs.sign_release == true && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v'))
@@ -114,7 +115,7 @@ jobs:
       - run: test -x "$ANDROID_HOME/build-tools/37.0.0/apksigner" || sdkmanager 'build-tools;37.0.0'
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with:
-          name: EdifierXCorolos-v0.2.0-build-${{ github.run_number }}
+          name: EdifierXCorolos-v0.2.1-build-${{ github.run_number }}
           path: artifacts
       - name: Restore existing keystore and sign (no debug fallback)
         env:
@@ -142,16 +143,16 @@ jobs:
           keytool -list -keystore "$RUNNER_TEMP/edifier-release.jks" -storepass:env KEYSTORE_PASSWORD -alias "$SIGNING_ALIAS" > "$RUNNER_TEMP/keycheck.log" 2>&1 || { echo '::error title=Alias validation::Keystore opened but ALIAS does not identify an existing entry. Check the existing ALIAS secret; do not create a new key.'; exit 1; }
           stage=zipalign
           mkdir -p signed
-          "$ANDROID_HOME/build-tools/37.0.0/zipalign" -f -P 16 4 artifacts/EdifierXCorolos-v0.2.0-release-unsigned.apk "$RUNNER_TEMP/aligned.apk"
+          "$ANDROID_HOME/build-tools/37.0.0/zipalign" -f -P 16 4 artifacts/EdifierXCorolos-v0.2.1-release-unsigned.apk "$RUNNER_TEMP/aligned.apk"
           stage=apksigner-sign
-          "$ANDROID_HOME/build-tools/37.0.0/apksigner" sign --ks "$RUNNER_TEMP/edifier-release.jks" --ks-key-alias "$SIGNING_ALIAS" --ks-pass env:KEYSTORE_PASSWORD --key-pass env:KEY_PASSWORD --out signed/EdifierXCorolos-v0.2.0-release.apk "$RUNNER_TEMP/aligned.apk" > "$RUNNER_TEMP/sign.log" 2>&1 || { python3 tools/signing_diagnostics.py "$RUNNER_TEMP/sign.log" key; exit 1; }
+          "$ANDROID_HOME/build-tools/37.0.0/apksigner" sign --ks "$RUNNER_TEMP/edifier-release.jks" --ks-key-alias "$SIGNING_ALIAS" --ks-pass env:KEYSTORE_PASSWORD --key-pass env:KEY_PASSWORD --out signed/EdifierXCorolos-v0.2.1-release.apk "$RUNNER_TEMP/aligned.apk" > "$RUNNER_TEMP/sign.log" 2>&1 || { python3 tools/signing_diagnostics.py "$RUNNER_TEMP/sign.log" key; exit 1; }
           stage=apksigner-verify
-          "$ANDROID_HOME/build-tools/37.0.0/apksigner" verify --verbose --print-certs signed/EdifierXCorolos-v0.2.0-release.apk > signed/signature-report.txt
+          "$ANDROID_HOME/build-tools/37.0.0/apksigner" verify --verbose --print-certs signed/EdifierXCorolos-v0.2.1-release.apk > signed/signature-report.txt
           stage=apk-metadata
-          python3 tools/verify_apk.py signed/EdifierXCorolos-v0.2.0-release.apk --aapt "$ANDROID_HOME/build-tools/37.0.0/aapt" > signed/apk-verification.json
+          python3 tools/verify_apk.py signed/EdifierXCorolos-v0.2.1-release.apk --aapt "$ANDROID_HOME/build-tools/37.0.0/aapt" > signed/apk-verification.json
           (cd signed && sha256sum *.apk > SHA256SUMS.txt)
           cat signed/SHA256SUMS.txt >> "$GITHUB_STEP_SUMMARY"
-          python3 tools/apk_summary.py signed/EdifierXCorolos-v0.2.0-release.apk
+          python3 tools/apk_summary.py signed/EdifierXCorolos-v0.2.1-release.apk
           echo 'Existing-key Release signing, apksigner verification and metadata: PASS' >> "$GITHUB_STEP_SUMMARY"
       - name: Remove temporary sensitive files
         if: always()
@@ -159,6 +160,6 @@ jobs:
       - name: Upload signed release APK
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: EdifierXCorolos-v0.2.0-signed-${{ github.run_number }}
+          name: EdifierXCorolos-v0.2.1-signed-${{ github.run_number }}
           path: signed/
           if-no-files-found: error

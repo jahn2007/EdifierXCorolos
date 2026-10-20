@@ -56,3 +56,7 @@ Actions artifact是ZIP且通常需要登录GitHub。为手机端提供实际APK�
 GitHub Hosted Runner当前由Gradle临时生成Debug证书，没有可恢复的持久Debug私钥。本次实际提取build10证书SHA256为`db1e88103d67ebb877d792bb9307919a061f77c048d25d6e9adadd4f857a393b`，build11为`d26c1f7bd790cfa9e06c5d46935660649a20735d91760299abea706c828b06ce`，两者不同，Android不允许直接覆盖。没有修改用户四项正式签名材料，也不把调试私钥放公开仓库或Artifact。
 
 若要安装build11且已装build10，可在保留诊断信息后卸载旧模块再安装；卸载会清除模块配置，须重新在LSPosed启用、授权和连接。卸载重装不是热重载验证。持续覆盖更新和热重载验收仍须使用同一受控证书；用户当前要求关闭正式签名，故暂不执行正式签名。
+
+## 0.2.1 构建变更
+
+versionCode=3，产物文件名使用v0.2.1，报告包含源码提交。CI要求至少57项测试，且对Debug APK执行apksigner verify并保留公开证书报告；正式签名继续默认关闭。临时Debug证书仍不保证跨Runner一致，同证书才可覆盖更新。

@@ -37,3 +37,7 @@ CI Lint、Debug/Release编译、DEX/manifest/模块元数据和签名是独立�
 ## 0.2.0 热重载验收
 
 新增8项HookGeneration测试：稳定ID/Executable替换、防重复注册、移除弃用和匿名句柄、签名变化、替换失败安全回退、清理失败阻止重复安装、部分失败继续清理并可重试、回滚原子替换后的新句柄。40测试已在Actions39266393750和39266976764通过；框架回调、旧ClassLoader回收、可见页面恢复和Bluetooth poller换代不能由JVM测试冒充实机PASS。详见[HOT_RELOAD](HOT_RELOAD.md)。
+
+## 0.2.1 识别与诊断回归
+
+新增13项IdentityAndDiagnosticsTest：无名称/无SPP缓存的Evo身份、错误目标地址、错误厂家ID、截断厂家数据、多产品歧义、SPP不能代替产品身份、错误协议与加密、UUID大小写、明文/XOR隔离、日志脱敏、日志容量、长错误界限、校验拒绝统计。总数57，CI结果见STATUS。实机新增：保留自定义名称首次识别；关闭采集后仍可导出已采事件；导出宿主等待原因；清空日志和重启后持久化行为。以上Android实机项尚待验证。

@@ -41,6 +41,6 @@ if __name__=='__main__':
     parser=argparse.ArgumentParser();parser.add_argument('apk',type=pathlib.Path);parser.add_argument('--aapt',required=True);args=parser.parse_args()
     badging=subprocess.check_output([args.aapt,'dump','badging',str(args.apk)],text=True)
     assert "package: name='io.github.jahn2007.edifierx'" in badging
-    assert "versionName='0.2.0'" in badging
+    assert "versionName='0.2.1'" in badging
     assert "sdkVersion:'35'" in badging
     print(json.dumps(verify(args.apk),indent=2))

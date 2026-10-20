@@ -1,5 +1,9 @@
 # 当前交付状态
 
+## 0.2.1 改名识别与详细日志
+
+根据用户反馈修正首次识别前改名导致的名称门禁失败，按官方APK的产品广播UUID、Manufacturer ID2016、经典地址和协议字段定向识别；成功协议READY后保存绑定。详细日志新增本机轮转持久化、关闭后保留、后台导出、协议校验统计和受控宿主汇总。新增13项合成测试，总数57，Actions本轮待验证；Android广播、ColorOS15和真实耳机仍未标PASS。操作见[改名与日志](RENAME_AND_LOGS.md)。
+
 ## 2026-10-20 官方 APK 研究与单耳电量修正
 
 已校验并分析用户官方8.5.3 APK，定位Evo Pro官方产品ID290、BES/SPP配置和通用编解码；整理345条静态产品研究记录。实际证据及限制见[官方报告](OFFICIAL_APK_ANALYSIS.md)。修正F2单耳布局清理另一耳电量，拒绝单设备及未知布局解锁TWS Profile，新增4项合成回归用例，总数44；[Actions39426768487](https://github.com/jahn2007/EdifierXCorolos/actions/runs/39426768487) 已SUCCESS，对应源码提交 `34b96b4d828acc70f3fff3e6c5fe257f66d5d3b0`，44项测试（0失败/跳过）、Lint、Debug/R8 Release、Manifest/DEX/API102元数据校验及Debug发布通过，sign SKIPPED。未启用无本型号运行证据的游戏/EQ/手势命令，真实手机/耳机仍全部UNRUN。
