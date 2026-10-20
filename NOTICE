@@ -13,3 +13,7 @@ UI-hook designs were researched from ColorOS-Panel-For-OriG-in (MIT),
 HuaweiPods-ColorOS and FxxkMoondrop (GPL-3.0), MelodyCodecTweaker (Apache-2.0).
 OPatch (AGPL-3.0) was consulted for platform constraints; no OPatch code was copied.
 EDIFIER, 花再, OPPO, OnePlus and ColorOS are their owners' marks. No endorsement implied.
+
+Official APK 8.5.3 (300) was privately inspected for interoperability on 2026-10-20.
+Only selected protocol/model facts are documented; the full product configuration,
+decompiled implementation, resource decoding constants and vendor assets are not redistributed.

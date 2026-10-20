@@ -5,7 +5,7 @@
 ## 使用
 
 1. **从0.1.0升级到首次支持热重载的0.2.0时，先重启所选宿主进程或手机一次。** 0.1.0的旧入口没有接受换代回调，不能由新APK追溯补上。以后保留本功能的版本可在覆盖安装新APK后由框架自动重载。
-2. 始终使用原正式证书签名的APK覆盖安装。Debug与Release证书不同，不能直接混装覆盖来调试。
+2. 覆盖安装要求同一证书。Debug与Release证书不同，不能直接混装覆盖；当前不同Hosted Runner生成的Debug证书也未持久化，已确认build10与build11不同，不能用这两个APK验证连续覆盖热重载。卸载重装会清除配置，且不是热重载。正式签名当前按用户要求关闭，详见[构建限制](BUILD.md#debug覆盖安装限制)。
 3. 框架若没有自动执行，模块内点“热重载已更新的宿主代码（API 102）”，从框架返回的运行目标中选择 STALE 或 FAILED 的进程。以API返回的opaque HookedTarget为身份，不用pid猜目标；`:cards`等子进程分别显示。
 4. 模块显示真实异步结果：SUCCEEDED / FAILED / UNSUPPORTED / IN_PROGRESS / PROCESS_DIED。UP_TO_DATE不会为了配置变化强制重载。15秒没有回调显示待确认，重新查询框架状态，不自动重试或宣称成功。
 5. SDK/宿主/框架版本与重载结果会进入脱敏诊断报告。新代码尝试立即恢复当前可见的原生Preference区；若ActivityThread/Fragment结构不匹配，退出再进入耳机详情页，让真实onResume重新挂载。

@@ -2,15 +2,17 @@
 
 ## 2026-10-20 官方 APK 研究与单耳电量修正
 
-已校验并分析用户官方8.5.3 APK，定位Evo Pro官方产品ID290、BES/SPP配置和通用编解码；整理345条静态产品研究记录。实际证据及限制见[官方报告](OFFICIAL_APK_ANALYSIS.md)。修正F2单耳布局清理另一耳电量，拒绝单设备及未知布局解锁TWS Profile，新增4项合成回归用例，总数44；本次Actions结果待运行后补记。未启用无本型号运行证据的游戏/EQ/手势命令，真实手机/耳机仍全部UNRUN。
+已校验并分析用户官方8.5.3 APK，定位Evo Pro官方产品ID290、BES/SPP配置和通用编解码；整理345条静态产品研究记录。实际证据及限制见[官方报告](OFFICIAL_APK_ANALYSIS.md)。修正F2单耳布局清理另一耳电量，拒绝单设备及未知布局解锁TWS Profile，新增4项合成回归用例，总数44；[Actions39426768487](https://github.com/jahn2007/EdifierXCorolos/actions/runs/39426768487) 已SUCCESS，对应源码提交 `34b96b4d828acc70f3fff3e6c5fe257f66d5d3b0`，44项测试（0失败/跳过）、Lint、Debug/R8 Release、Manifest/DEX/API102元数据校验及Debug发布通过，sign SKIPPED。未启用无本型号运行证据的游戏/EQ/手势命令，真实手机/耳机仍全部UNRUN。
 
 ## APK直接下载已验证
 
-[Debug APK直链](https://github.com/jahn2007/EdifierXCorolos/releases/download/debug-v0.2.0-build10/EdifierXCorolos-v0.2.0-debug.apk)（2696804 bytes），[Release页面](https://github.com/jahn2007/EdifierXCorolos/releases/tag/debug-v0.2.0-build10)。
+[Debug APK直链](https://github.com/jahn2007/EdifierXCorolos/releases/download/debug-v0.2.0-build11/EdifierXCorolos-v0.2.0-debug.apk)（2696872 bytes），[Release页面](https://github.com/jahn2007/EdifierXCorolos/releases/tag/debug-v0.2.0-build11)。
 
-[Actions39291673590](https://github.com/jahn2007/EdifierXCorolos/actions/runs/39291673590) 已SUCCESS：40项测试、Lint、编译、元数据检查及Publish downloadable Debug APK均通过；正式签名跳过。
+[Actions39426768487](https://github.com/jahn2007/EdifierXCorolos/actions/runs/39426768487) 已SUCCESS：44项测试、Lint、编译、元数据检查及Publish downloadable Debug APK均通过；正式签名跳过。
 
-已从无GitHub登录的HTTP请求实际下载公开APK，并与Release的校验文件和asset digest三方匹配：`f1699d952d780fa0f71b4b896ec131ab10ba9dcf98145c28dc51029314cfa79c`。这是调试证书APK，不是正式签名稳定版，实机功能仍待验证。之后main构建自动增加独立Debug artifact并发布Debug prerelease。
+已从无GitHub登录的HTTP请求实际下载公开APK，并与Release的校验文件和asset digest三方匹配：`a089f4646e5094acffc468fef82fcb04b81f57dfb581d95ea390ca2c91f9b13e`。这是调试证书APK，不是正式签名稳定版，实机功能仍待验证。实测提取的证书表明build10与build11不同，不能覆盖安装或验证跨构建热重载；本次没有轮换用户正式密钥。main构建另有独立Debug artifact和Debug prerelease。
+
+[完整构建产物](https://github.com/jahn2007/EdifierXCorolos/actions/runs/39426768487/artifacts/12265658355) · [测试报告](https://github.com/jahn2007/EdifierXCorolos/actions/runs/39426768487/artifacts/12266925942)。本次报告工具两次运行的JSON字节一致；ZIP CRC及9/9 DEX头部校验通过，静态分析不等于硬件实测。
 
 ## 当前构建策略
 

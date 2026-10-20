@@ -8,7 +8,7 @@
 
 ## 默认构建（暂不进行正式签名）
 
-Push、PR、Tag与手动运行默认只执行build job，保留40项测试、Lint、Debug/R8 Release编译和模块结构校验。上传的Debug APK由Gradle使用调试证书签名，可用于安装调试；Release APK保留unsigned标识，未签名不能直接安装。默认运行不读取四项正式签名Secrets，签名问题不会再导致整轮CI失败。
+Push、PR、Tag与手动运行默认只执行build job，要求至少44项测试、Lint、Debug/R8 Release编译和模块结构校验。上传的Debug APK由Gradle使用调试证书签名，可用于安装调试；Release APK保留unsigned标识，未签名不能直接安装。默认运行不读取四项正式签名Secrets，签名问题不会再导致整轮CI失败。
 
 以后需要正式签名时，在Android CI的Run workflow中明确勾选sign_release。现在保持关闭即可，无需修改或删除现有签名材料。
 
@@ -41,7 +41,7 @@ GitHub API 初始请求在代理 CONNECT阶段返回403；环境配置草稿已�
 
 ## 0.2.0 热重载构建
 
-versionCode=2；Debug、unsigned Release与正式签名产物名称均使用v0.2.0。CI现在要求40项测试，检查单一入口和autoHotReload=true。用户已修复Repository secrets，但新Actions39266976764实际仍在JKS store password完整性/密码校验阶段失败；40测试和APK编译成功，尚无正式签名产物。签名仍使用既有四项Secret，不生成密钥。
+versionCode=2；Debug、unsigned Release与正式签名产物名称均使用v0.2.0。该历史运行要求40项测试（当前已升为44项），检查单一入口和autoHotReload=true。用户已修复Repository secrets，但新Actions39266976764实际仍在JKS store password完整性/密码校验阶段失败；40测试和APK编译成功，尚无正式签名产物。签名仍使用既有四项Secret，不生成密钥。
 
 ## 默认不签名构建已验证
 
@@ -50,3 +50,9 @@ Actions39290685717整体SUCCESS：40测试、Lint、Debug与R8 Release编译、�
 ## APK直接下载
 
 Actions artifact是ZIP且通常需要登录GitHub。为手机端提供实际APK附件，成功的main构建会执行publish_debug job，使用GitHub自带GITHUB_TOKEN发布明确标注Debug的prerelease；上传可安装APK和独立SHA256文件，并在job summary显示真实下载URL。只给该job contents:write，PR不运行发布，也不使用正式签名Secrets。每次构建使用独立debug-v0.2.0-build编号，不覆盖既有Release或证书。构建页同时保留独立debug artifact和完整build artifact。
+
+## Debug覆盖安装限制
+
+GitHub Hosted Runner当前由Gradle临时生成Debug证书，没有可恢复的持久Debug私钥。本次实际提取build10证书SHA256为`db1e88103d67ebb877d792bb9307919a061f77c048d25d6e9adadd4f857a393b`，build11为`d26c1f7bd790cfa9e06c5d46935660649a20735d91760299abea706c828b06ce`，两者不同，Android不允许直接覆盖。没有修改用户四项正式签名材料，也不把调试私钥放公开仓库或Artifact。
+
+若要安装build11且已装build10，可在保留诊断信息后卸载旧模块再安装；卸载会清除模块配置，须重新在LSPosed启用、授权和连接。卸载重装不是热重载验证。持续覆盖更新和热重载验收仍须使用同一受控证书；用户当前要求关闭正式签名，故暂不执行正式签名。
