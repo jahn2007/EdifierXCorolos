@@ -48,3 +48,7 @@ legacy 帧：`AA LEN CMD PAYLOAD SUM_H SUM_L`，LEN=payload+1；校验 `0x2019 +
 ## 后续证据采集
 
 见 [CAPTURE](CAPTURE.md)。APK 已完成静态分析，仍需 Evo Pro 当前固件、官方 App 单变量日志、ColorOS 15 宿主版本/可合法提供的组件 APK。不会运行参考 poc.py 的扫描/爆破循环。配对认证、firmware 安全机制和 SELinux 保持不变。
+
+## 0.2.1 首次改名识别
+
+根据用户反馈，首次选择前已经改名会在0.2.0名称/UUID缓存门禁处失败，尚未发起RFCOMM。0.2.1按官方BLEManager及ConnectManager重新实现定向广播身份关联：产品UUID、厂家ID2016、完整所选经典地址和协议字段共同匹配；不依赖Evo显示名称或getUuids缓存。实际控制仍经公开SPP/SDP路线和F2/ANC验证，不建立Evo GATT控制连接。官方静态证据、型号边界和详细日志见[改名识别](RENAME_AND_LOGS.md)。

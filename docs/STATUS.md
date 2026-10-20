@@ -2,13 +2,19 @@
 
 ## 0.2.1 改名识别与详细日志
 
-根据用户反馈修正首次识别前改名导致的名称门禁失败，按官方APK的产品广播UUID、Manufacturer ID2016、经典地址和协议字段定向识别；成功协议READY后保存绑定。详细日志新增本机轮转持久化、关闭后保留、后台导出、协议校验统计和受控宿主汇总。新增13项合成测试，总数57，Actions本轮待验证；Android广播、ColorOS15和真实耳机仍未标PASS。操作见[改名与日志](RENAME_AND_LOGS.md)。
+根据用户反馈修正首次识别前改名导致的名称门禁失败，按官方APK的产品广播UUID、Manufacturer ID2016、经典地址和协议字段定向识别；成功协议READY后保存绑定。详细日志新增本机轮转持久化、关闭后保留、后台导出、协议校验统计和受控宿主汇总。新增13项合成测试，总数57，已由[Actions39434063178](https://github.com/jahn2007/EdifierXCorolos/actions/runs/39434063178)验证通过（0失败/跳过），对应源码`f90995dfa3fad2a2825e26ef63e04c6048496f9a`。Lint、Debug/R8 Release、API102元数据和Debug v2签名校验通过，发布成功，正式签名SKIPPED；Android广播、ColorOS15和真实耳机仍未标PASS。操作见[改名与日志](RENAME_AND_LOGS.md)。
 
 ## 2026-10-20 官方 APK 研究与单耳电量修正
 
 已校验并分析用户官方8.5.3 APK，定位Evo Pro官方产品ID290、BES/SPP配置和通用编解码；整理345条静态产品研究记录。实际证据及限制见[官方报告](OFFICIAL_APK_ANALYSIS.md)。修正F2单耳布局清理另一耳电量，拒绝单设备及未知布局解锁TWS Profile，新增4项合成回归用例，总数44；[Actions39426768487](https://github.com/jahn2007/EdifierXCorolos/actions/runs/39426768487) 已SUCCESS，对应源码提交 `34b96b4d828acc70f3fff3e6c5fe257f66d5d3b0`，44项测试（0失败/跳过）、Lint、Debug/R8 Release、Manifest/DEX/API102元数据校验及Debug发布通过，sign SKIPPED。未启用无本型号运行证据的游戏/EQ/手势命令，真实手机/耳机仍全部UNRUN。
 
-## APK直接下载已验证
+[下载0.2.1 Debug APK](https://github.com/jahn2007/EdifierXCorolos/releases/download/debug-v0.2.1-build13/EdifierXCorolos-v0.2.1-debug.apk)（2741552 bytes）。已无登录实际下载，SHA256与校验文件及asset digest匹配：`6a37f744fdd841a98dfafe5b1e8825828f984711bf60b03e7c9479550c6e4efe`。
+
+[构建产物](https://github.com/jahn2007/EdifierXCorolos/actions/runs/39434063178/artifacts/12268539296) · [57项测试报告](https://github.com/jahn2007/EdifierXCorolos/actions/runs/39434063178/artifacts/12268584099)。Debug证书SHA256为`5fe2405eb36847fe7ba4cb71d6066a35fa180bed40cb551fbf9a93302e4c2fac`，与build11不同，不能直接覆盖安装；没有修改用户正式密钥。
+
+首轮[39433738760](https://github.com/jahn2007/EdifierXCorolos/actions/runs/39433738760)的57项测试通过，但Lint发现Files.writeString/readString需要API36.1，阻断构建和发布；已改用Android15支持的字节API后通过上述运行，没有关闭Lint或提高minSdk掩盖问题。
+
+## 0.2.0 历史下载记录
 
 [Debug APK直链](https://github.com/jahn2007/EdifierXCorolos/releases/download/debug-v0.2.0-build11/EdifierXCorolos-v0.2.0-debug.apk)（2696872 bytes），[Release页面](https://github.com/jahn2007/EdifierXCorolos/releases/tag/debug-v0.2.0-build11)。
 

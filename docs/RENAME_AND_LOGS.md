@@ -38,4 +38,4 @@
 
 ## 验证状态
 
-广播和日志规则的样本均是依据官方静态布局构造的合成回归，不是本用户HCI实录。新增13项测试，总数57；构建结果见STATUS。Android扫描回调、广播实际字段、Provider宿主转发、ColorOS15结构和Evo硬件控制仍需上述实机验收，不能因CI通过而标PASS。
+广播和日志规则的样本均是依据官方静态布局构造的合成回归，不是本用户HCI实录。新增13项测试，总数57；[Actions39434063178](https://github.com/jahn2007/EdifierXCorolos/actions/runs/39434063178)已通过57项测试（0失败/跳过）、Lint、Debug/R8 Release、API102元数据、Debug签名校验和发布；源码f90995d。下载链接和APK SHA256见STATUS。Android扫描回调、广播实际字段、Provider宿主转发、ColorOS15结构和Evo硬件控制仍需上述实机验收，不能因CI通过而标PASS。
